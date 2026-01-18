@@ -1,1335 +1,868 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-<title>Trap Tracker — Olympic Trap</title>
-<style>
-  :root{
-    --bg:#0b0c10; --card:#12141a; --muted:#9aa3b2; --text:#eef2ff; --border:#232735;
-    --green:#22c55e; --red:#ef4444; --orange:#f97316; --yellow:#eab308;
-    --shadow: 0 12px 30px rgba(0,0,0,.35);
-    --radius:16px;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
-  html,body{height:100%;}
-  body{
-    margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;
-    background: radial-gradient(1000px 500px at 30% -10%, rgba(34,197,94,.15), transparent 55%),
-                radial-gradient(900px 450px at 80% 0%, rgba(239,68,68,.12), transparent 55%),
-                linear-gradient(180deg,#090a0f,#0b0c10 40%, #07080c);
-    color:var(--text);
-  }
-  .wrap{max-width:980px;margin:0 auto;padding:18px 14px 40px;}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px;}
-  .title{display:flex;flex-direction:column;gap:4px}
-  .title h1{font-size:18px;margin:0;letter-spacing:.2px}
-  .title p{margin:0;color:var(--muted);font-size:12.5px}
-  .pill{
-    display:inline-flex;align-items:center;gap:8px;
-    background:rgba(255,255,255,.04);
-    border:1px solid var(--border);
-    padding:8px 10px;border-radius:999px;
-    color:var(--text);font-size:12.5px;
-  }
-  .pill b{font-weight:700}
-  .tabs{
-    display:flex;gap:8px;flex-wrap:wrap;
-    margin:10px 0 14px;
-  }
-  .tab{
-    flex:1 1 auto;
-    border:1px solid var(--border);
-    background:rgba(255,255,255,.03);
-    color:var(--text);
-    padding:10px 12px;
-    border-radius:12px;
-    font-weight:650;
-    font-size:13px;
-    cursor:pointer;
-  }
-  .tab.active{border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.06);}
-  .panel{display:none;}
-  .panel.active{display:block;}
-  .card{
-    background:rgba(18,20,26,.9);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:14px;
-    margin:10px 0;
-  }
-  .grid{
-    display:grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap:10px;
-  }
-  @media (max-width:720px){
-    .grid{grid-template-columns: 1fr;}
-  }
-  label{display:block;color:var(--muted);font-size:12px;margin:0 0 6px;}
-  input,textarea,select{
-    width:100%;
-    background:rgba(255,255,255,.03);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-radius:12px;
-    padding:10px 12px;
-    outline:none;
-    font-size:14px;
-  }
-  textarea{min-height:90px;resize:vertical;}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .row > *{flex:1 1 auto;}
-  .btn{
-    border:1px solid var(--border);
-    background:rgba(255,255,255,.04);
-    color:var(--text);
-    padding:10px 12px;
-    border-radius:12px;
-    cursor:pointer;
-    font-weight:650;
-    font-size:13px;
-  }
-  .btn:active{transform:translateY(1px);}
-  .btn.primary{border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.10);}
-  .btn.danger{border-color:rgba(239,68,68,.35); background:rgba(239,68,68,.10);}
-  .btn.orange{border-color:rgba(249,115,22,.35); background:rgba(249,115,22,.10);}
-  .btn.small{padding:8px 10px;font-size:12.5px;border-radius:10px}
-  .btn.wide{width:100%;padding:14px 12px;font-size:15px;border-radius:14px}
-  .btn.hitActive{outline:2px solid rgba(34,197,94,.35);}
-  .btn.missActive{outline:2px solid rgba(239,68,68,.35);}
-  .seg{
-    display:flex;
-    border:1px solid var(--border);
-    border-radius:14px;
-    overflow:hidden;
-    background:rgba(255,255,255,.02);
-  }
-  .seg button{
-    flex:1;
-    border:0;
-    background:transparent;
-    color:var(--muted);
-    padding:10px 12px;
-    font-weight:700;
-    cursor:pointer;
-  }
-  .seg button.active{
-    color:var(--text);
-    background:rgba(255,255,255,.06);
-  }
-  .status{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-    margin-top:8px;
-    color:var(--muted);font-size:12.5px;
-  }
-  .status b{color:var(--text)}
-  .divider{height:1px;background:var(--border);margin:12px 0;}
-  .shotsGrid{
-    display:grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap:8px;
-  }
-  @media (max-width:520px){
-    .shotsGrid{grid-template-columns: repeat(5, minmax(0, 1fr));}
-  }
-  .cell{
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:8px 8px;
-    background:rgba(255,255,255,.02);
-    display:flex;flex-direction:column;gap:4px;
-    min-height:52px;
-  }
-  .cell .n{font-size:11px;color:var(--muted);}
-  .cell .v{font-size:12.5px;font-weight:750;letter-spacing:.2px}
-  .tag{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:11px;color:var(--muted);
-  }
-  .dot{width:8px;height:8px;border-radius:999px;background:var(--border);display:inline-block}
-  .dot.green{background:var(--green)}
-  .dot.red{background:var(--red)}
-  .dot.gray{background:#5b6477}
-  .dot.orange{background:var(--orange)}
-  .diagramWrap{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:12px;
-  }
-  @media (max-width:860px){
-    .diagramWrap{grid-template-columns:1fr;}
-  }
-  .diagramCard{
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:12px;
-    background:rgba(255,255,255,.02);
-  }
-  .diagramHead{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    margin-bottom:8px;
-  }
-  .diagramHead .left{display:flex;align-items:center;gap:10px}
-  .diagramHead h3{margin:0;font-size:13.5px}
-  .diagramHead span{color:var(--muted);font-size:12px}
-  .dimmed{opacity:.35; filter:saturate(.7); pointer-events:none;}
-  .svgBtn{
-    width:100%;
-    border:1px solid var(--border);
-    background:rgba(255,255,255,.02);
-    border-radius:16px;
-    padding:8px;
-    cursor:pointer;
-    touch-action:manipulation;
-  }
-  .svgBtn:active{transform:translateY(1px);}
-  .legend{
-    display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:12px;
-  }
-  .kpi{
-    display:grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap:10px;
-  }
-  @media (max-width:860px){
-    .kpi{grid-template-columns: repeat(2, minmax(0, 1fr));}
-  }
-  .k{
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:12px;
-    background:rgba(255,255,255,.02);
-  }
-  .k .t{color:var(--muted);font-size:12px}
-  .k .v{font-size:18px;font-weight:800;margin-top:4px}
-  .list{display:flex;flex-direction:column;gap:10px;}
-  .roundItem{
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:12px;
-    background:rgba(255,255,255,.02);
-  }
-  .roundTop{
-    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  }
-  .roundTop .meta{display:flex;flex-direction:column;gap:4px}
-  .roundTop .meta b{font-size:14px}
-  .roundTop .meta small{color:var(--muted)}
-  .roundBtns{display:flex;gap:8px;flex-wrap:wrap}
-  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  .hint{color:var(--muted);font-size:12.5px;line-height:1.45}
-  .warn{
-    border:1px solid rgba(249,115,22,.35);
-    background:rgba(249,115,22,.08);
-    padding:10px 12px;border-radius:14px;
-    color:#ffd6b8;font-size:12.5px;
-  }
-
-  /* Print (PDF) */
-  @media print{
-    body{background:#fff;color:#000;}
-    .noPrint{display:none !important;}
-    .printCard{
-      border:1px solid #ddd;
-      padding:14px;
-      border-radius:10px;
-      margin:10px 0;
-    }
-    .printGrid{
-      display:grid;
-      grid-template-columns: repeat(25, 1fr);
-      gap:6px;
-    }
-    .printCell{
-      border:1px solid #ddd;
-      min-height:44px;
-      padding:4px;
-      font-size:10px;
-    }
-    .printCell b{display:block;font-size:11px;margin-bottom:3px;}
-    .printMeta{font-size:12px;line-height:1.4}
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header>
-    <div class="title">
-      <h1>Trap Tracker — Olympic Trap</h1>
-      <p>One-page tracker • saves locally (offline) • export rounds to PDF</p>
-    </div>
-    <div class="pill mono"><span>Rounds:</span> <b id="totalRounds">0</b></div>
-  </header>
-
-  <div class="tabs noPrint">
-    <button class="tab active" data-tab="live">1) Live Round</button>
-    <button class="tab" data-tab="stats">2) Statistics</button>
-    <button class="tab" data-tab="saved">3) Saved Rounds</button>
-  </div>
-
-  <!-- LIVE -->
-  <section id="panel-live" class="panel active">
-    <div class="card">
-      <div class="grid">
-        <div>
-          <label>Club</label>
-          <input id="club" placeholder="e.g., Rabat Shooting Club" />
-        </div>
-        <div>
-          <label>Field</label>
-          <input id="field" placeholder="e.g., Field 2" />
-        </div>
-        <div>
-          <label>Date</label>
-          <input id="date" type="date" />
-        </div>
-      </div>
-      <div style="margin-top:10px">
-        <label>Notes</label>
-        <textarea id="notes" placeholder="Wind, ammo, focus cue, coach notes..."></textarea>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row noPrint">
-        <button id="btnHit" class="btn wide primary">✅ HIT</button>
-        <button id="btnMiss" class="btn wide danger">❌ MISS</button>
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <div>
-          <label>Shot</label>
-          <div class="seg noPrint" role="tablist" aria-label="Shot toggle">
-            <button id="shot1" class="active" type="button">1st shot</button>
-            <button id="shot2" type="button">2nd shot</button>
-          </div>
-        </div>
-        <div>
-          <label>Quick actions</label>
-          <div class="row noPrint" style="gap:8px">
-            <button id="btnUndo" class="btn small">↩︎ Undo</button>
-            <button id="btnReset" class="btn small orange">Reset round</button>
-            <button id="btnSave" class="btn small primary">Save round</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="status">
-        <div>Target: <b id="curTarget">1</b> / 25 • Shot: <b id="curShot">1</b> • Mode: <b id="curOutcome">HIT</b></div>
-        <div class="tag"><span class="dot gray"></span><span>Tap a zone below to record & auto-advance</span></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="diagramWrap">
-        <!-- HIT DIAGRAM -->
-        <div id="hitDiagramCard" class="diagramCard">
-          <div class="diagramHead">
-            <div class="left">
-              <span class="dot green"></span>
-              <h3>Hit zone diagram</h3>
-            </div>
-            <span>Active when HIT selected</span>
-          </div>
-          <button class="svgBtn noPrint" id="hitDiagramBtn" aria-label="Hit diagram">
-            <svg id="hitSvg" viewBox="0 0 320 200" width="100%" height="200" role="img" aria-label="Hit direction diagram"></svg>
-          </button>
-          <div class="legend">
-            <span class="tag"><span class="dot green"></span>Hard Left</span>
-            <span class="tag"><span class="dot green"></span>Soft Left</span>
-            <span class="tag"><span class="dot green"></span>Center</span>
-            <span class="tag"><span class="dot green"></span>Soft Right</span>
-            <span class="tag"><span class="dot green"></span>Hard Right</span>
-          </div>
-        </div>
-
-        <!-- MISS DIAGRAM -->
-        <div id="missDiagramCard" class="diagramCard">
-          <div class="diagramHead">
-            <div class="left">
-              <span class="dot red"></span>
-              <h3>Miss zone diagram</h3>
-            </div>
-            <span>Active when MISS selected</span>
-          </div>
-          <button class="svgBtn noPrint" id="missDiagramBtn" aria-label="Miss diagram">
-            <svg id="missSvg" viewBox="0 0 320 200" width="100%" height="200" role="img" aria-label="Miss direction diagram"></svg>
-          </button>
-          <div class="legend">
-            <span class="tag"><span class="dot red"></span>Hard Left</span>
-            <span class="tag"><span class="dot red"></span>Soft Left</span>
-            <span class="tag"><span class="dot red"></span>Center</span>
-            <span class="tag"><span class="dot red"></span>Soft Right</span>
-            <span class="tag"><span class="dot red"></span>Hard Right</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row">
-        <div class="hint">
-          <b>How scoring works here:</b> 25 targets. If you hit on 1st shot → that target is a Hit. If you miss 1st shot, you’ll shoot 2nd. If you hit 2nd → target is Hit. If you miss both → target is Miss.
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="row" style="align-items:flex-end">
-        <div>
-          <div class="tag"><span class="dot green"></span><span>Targets hit</span></div>
-          <div class="pill mono" style="margin-top:8px"><b id="scoreHits">0</b> / 25</div>
-        </div>
-        <div>
-          <div class="tag"><span class="dot red"></span><span>Targets missed</span></div>
-          <div class="pill mono" style="margin-top:8px"><b id="scoreMiss">0</b> / 25</div>
-        </div>
-        <div style="min-width:220px">
-          <div class="tag"><span class="dot orange"></span><span>Attempts logged</span></div>
-          <div class="pill mono" style="margin-top:8px"><b id="attemptsLogged">0</b></div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="shotsGrid" id="roundGrid"></div>
-
-      <div class="divider"></div>
-      <div class="warn">
-        Tip: If you want ultra-fast logging, leave “HIT” selected most of the time.
-        If you miss the first shot, tap “MISS”, pick the miss zone — you’ll auto-advance to 2nd shot instantly.
-      </div>
-    </div>
-  </section>
-
-  <!-- STATS -->
-  <section id="panel-stats" class="panel">
-    <div class="card noPrint">
-      <div class="row">
-        <div>
-          <label>Time range</label>
-          <select id="statsRange">
-            <option value="all">All time</option>
-            <option value="today">Today</option>
-            <option value="10d">Last 10 days</option>
-            <option value="3m">Last 3 months</option>
-            <option value="custom">Custom range…</option>
-          </select>
-        </div>
-        <div id="statsCustom" style="display:none">
-          <label>From</label>
-          <input id="statsFrom" type="date" />
-        </div>
-        <div id="statsCustom2" style="display:none">
-          <label>To</label>
-          <input id="statsTo" type="date" />
-        </div>
-        <div style="min-width:160px">
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnRefreshStats">Refresh</button>
-        </div>
-      </div>
-      <div class="hint" style="margin-top:10px">
-        Stats are computed from your saved rounds on this device (localStorage).
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="kpi">
-        <div class="k"><div class="t">Rounds in range</div><div class="v" id="kRounds">0</div></div>
-        <div class="k"><div class="t">Avg score (hits/25)</div><div class="v" id="kAvg">0.0</div></div>
-        <div class="k"><div class="t">Avg misses</div><div class="v" id="kAvgMiss">0.0</div></div>
-        <div class="k"><div class="t">Hit % (targets)</div><div class="v" id="kHitPct">0%</div></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row">
-        <div class="k" style="flex:1 1 320px">
-          <div class="t">Best score</div>
-          <div class="v" id="kBest">—</div>
-        </div>
-        <div class="k" style="flex:1 1 320px">
-          <div class="t">Lowest score</div>
-          <div class="v" id="kWorst">—</div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="diagramWrap">
-        <div class="diagramCard">
-          <div class="diagramHead">
-            <div class="left">
-              <span class="dot red"></span>
-              <h3>Average misses by direction</h3>
-            </div>
-            <span class="mono">per round</span>
-          </div>
-          <div class="pill mono" style="margin-bottom:10px">Avg misses: <b id="missAvgTop">0.0</b></div>
-          <div class="svgBtn" style="cursor:default">
-            <svg id="statsMissSvg" viewBox="0 0 320 200" width="100%" height="200" role="img" aria-label="Miss direction averages"></svg>
-          </div>
-          <div class="hint" id="statsMissHint" style="margin-top:8px"></div>
-        </div>
-
-        <div class="diagramCard">
-          <div class="diagramHead">
-            <div class="left">
-              <span class="dot green"></span>
-              <h3>Average hits by direction</h3>
-            </div>
-            <span class="mono">per round</span>
-          </div>
-          <div class="pill mono" style="margin-bottom:10px">Avg hits: <b id="hitAvgTop">0.0</b></div>
-          <div class="svgBtn" style="cursor:default">
-            <svg id="statsHitSvg" viewBox="0 0 320 200" width="100%" height="200" role="img" aria-label="Hit direction averages"></svg>
-          </div>
-          <div class="hint" id="statsHitHint" style="margin-top:8px"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SAVED -->
-  <section id="panel-saved" class="panel">
-    <div class="card noPrint">
-      <div class="row">
-        <div>
-          <label>Filter</label>
-          <select id="savedRange">
-            <option value="all">All time</option>
-            <option value="today">Today</option>
-            <option value="10d">Last 10 days</option>
-            <option value="3m">Last 3 months</option>
-            <option value="custom">Custom range…</option>
-          </select>
-        </div>
-        <div id="savedCustom" style="display:none">
-          <label>From</label>
-          <input id="savedFrom" type="date" />
-        </div>
-        <div id="savedCustom2" style="display:none">
-          <label>To</label>
-          <input id="savedTo" type="date" />
-        </div>
-        <div style="min-width:160px">
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnRefreshSaved">Refresh</button>
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn danger" id="btnDeleteAll">Delete ALL saved rounds</button>
-        <div class="hint" style="flex:2 1 320px">
-          Export PDF opens a print-friendly view — on iPhone you can “Share → Print → Save as PDF”.
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="list" id="savedList"></div>
-      <div class="hint" id="savedEmpty" style="display:none">No saved rounds in this range yet.</div>
-    </div>
-  </section>
-</div>
-
-<script>
-/* =========================
-   Storage + Helpers
-========================= */
-const LS_KEY = "trapTracker_rounds_v1";
-
-function loadRounds(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){
-    console.warn("Failed loading rounds", e);
-    return [];
-  }
-}
-function saveRounds(rounds){
-  localStorage.setItem(LS_KEY, JSON.stringify(rounds));
-  updateTotalRounds();
-}
-function updateTotalRounds(){
-  const rounds = loadRounds();
-  document.getElementById("totalRounds").textContent = rounds.length;
-}
-function isoToday(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
-function startOfDay(d){
-  const x = new Date(d);
-  x.setHours(0,0,0,0);
-  return x;
-}
-function endOfDay(d){
-  const x = new Date(d);
-  x.setHours(23,59,59,999);
-  return x;
-}
-function inRange(dateObj, from, to){
-  const t = dateObj.getTime();
-  return t >= from.getTime() && t <= to.getTime();
-}
-function parseRoundDate(round){
-  // Use round.date if set, else createdAt
-  if(round.date){
-    // date is yyyy-mm-dd
-    const [y,m,d] = round.date.split("-").map(Number);
-    return new Date(y, m-1, d);
-  }
-  return new Date(round.createdAt || Date.now());
-}
-function rangeToDates(range, fromVal, toVal){
-  const now = new Date();
-  if(range === "today"){
-    return [startOfDay(now), endOfDay(now)];
-  }
-  if(range === "10d"){
-    const from = new Date(now);
-    from.setDate(from.getDate()-9);
-    return [startOfDay(from), endOfDay(now)];
-  }
-  if(range === "3m"){
-    const from = new Date(now);
-    from.setMonth(from.getMonth()-3);
-    return [startOfDay(from), endOfDay(now)];
-  }
-  if(range === "custom"){
-    const from = fromVal ? new Date(fromVal+"T00:00:00") : startOfDay(now);
-    const to = toVal ? new Date(toVal+"T23:59:59") : endOfDay(now);
-    return [from, to];
-  }
-  // all
-  return [new Date(1970,0,1), new Date(2999,11,31)];
-}
-
-const ZONES = [
-  {key:"HL", label:"Hard Left",  deg:-60},
-  {key:"SL", label:"Soft Left",  deg:-30},
-  {key:"C",  label:"Center",     deg:  0},
-  {key:"SR", label:"Soft Right", deg: 30},
-  {key:"HR", label:"Hard Right", deg: 60},
-];
-
-/* =========================
-   Tabs
-========================= */
-document.querySelectorAll(".tab").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    const tab = btn.dataset.tab;
-    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
-    document.getElementById("panel-"+tab).classList.add("active");
-
-    // refresh when opening tabs
-    if(tab === "stats") refreshStats();
-    if(tab === "saved") refreshSaved();
-  });
-});
-
-/* =========================
-   Live Round State
-========================= */
-const els = {
-  club: document.getElementById("club"),
-  field: document.getElementById("field"),
-  date: document.getElementById("date"),
-  notes: document.getElementById("notes"),
-
-  btnHit: document.getElementById("btnHit"),
-  btnMiss: document.getElementById("btnMiss"),
-  shot1: document.getElementById("shot1"),
-  shot2: document.getElementById("shot2"),
-
-  curTarget: document.getElementById("curTarget"),
-  curShot: document.getElementById("curShot"),
-  curOutcome: document.getElementById("curOutcome"),
-
-  hitCard: document.getElementById("hitDiagramCard"),
-  missCard: document.getElementById("missDiagramCard"),
-  hitSvg: document.getElementById("hitSvg"),
-  missSvg: document.getElementById("missSvg"),
-
-  roundGrid: document.getElementById("roundGrid"),
-  scoreHits: document.getElementById("scoreHits"),
-  scoreMiss: document.getElementById("scoreMiss"),
-  attemptsLogged: document.getElementById("attemptsLogged"),
-
-  btnUndo: document.getElementById("btnUndo"),
-  btnReset: document.getElementById("btnReset"),
-  btnSave: document.getElementById("btnSave"),
-};
-
-els.date.value = isoToday();
-
-let live = null;
-
-function newLiveRound(){
-  live = {
-    id: "R"+Math.random().toString(36).slice(2,10) + Date.now().toString(36),
-    createdAt: new Date().toISOString(),
-    club: "",
-    field: "",
-    date: isoToday(),
-    notes: "",
-    // 25 targets. each target has attempts for shot1/shot2 plus computed outcome (hit/miss)
-    targets: Array.from({length:25}, ()=>({
-      shot1:null, // {outcome:'HIT'/'MISS', zone:'HL'.., ts}
-      shot2:null,
-      final:null, // 'HIT' or 'MISS' when resolved
-    })),
-    // attempt log stack (for undo)
-    history: [],
-    // cursor
-    targetIndex: 0, // 0..24
-    shot: 1,        // 1 or 2
-    outcomeMode: "HIT", // current selection
-  };
-  syncMetaFromInputs();
-  renderAllLive();
-  setOutcomeMode("HIT");
-  setShot(1);
-}
-function syncMetaFromInputs(){
-  if(!live) return;
-  live.club = els.club.value.trim();
-  live.field = els.field.value.trim();
-  live.date = els.date.value || isoToday();
-  live.notes = els.notes.value.trim();
-}
-["input","change"].forEach(evt=>{
-  els.club.addEventListener(evt, ()=>{ if(live){ live.club = els.club.value.trim(); }});
-  els.field.addEventListener(evt, ()=>{ if(live){ live.field = els.field.value.trim(); }});
-  els.date.addEventListener(evt, ()=>{ if(live){ live.date = els.date.value || isoToday(); }});
-  els.notes.addEventListener(evt, ()=>{ if(live){ live.notes = els.notes.value.trim(); }});
-});
-
-function setOutcomeMode(mode){
-  if(!live) return;
-  live.outcomeMode = mode;
-  els.curOutcome.textContent = mode;
-
-  // button highlight
-  els.btnHit.classList.toggle("hitActive", mode === "HIT");
-  els.btnMiss.classList.toggle("missActive", mode === "MISS");
-
-  // active diagram
-  if(mode === "HIT"){
-    els.hitCard.classList.remove("dimmed");
-    els.missCard.classList.add("dimmed");
-  }else{
-    els.missCard.classList.remove("dimmed");
-    els.hitCard.classList.add("dimmed");
-  }
-}
-function setShot(shot){
-  if(!live) return;
-  live.shot = shot;
-  els.curShot.textContent = String(shot);
-  els.shot1.classList.toggle("active", shot === 1);
-  els.shot2.classList.toggle("active", shot === 2);
-}
-els.btnHit.addEventListener("click", ()=>setOutcomeMode("HIT"));
-els.btnMiss.addEventListener("click", ()=>setOutcomeMode("MISS"));
-els.shot1.addEventListener("click", ()=>setShot(1));
-els.shot2.addEventListener("click", ()=>setShot(2));
-
-function isRoundComplete(){
-  return live.targets.every(t => t.final === "HIT" || t.final === "MISS");
-}
-function clampCursor(){
-  live.targetIndex = Math.min(24, Math.max(0, live.targetIndex));
-  live.shot = (live.shot === 2) ? 2 : 1;
-}
-function gotoNextAfterAttempt(outcome){
-  // Auto-advance logic:
-  // - if HIT on shot1: resolve target HIT, move to next target shot1
-  // - if MISS on shot1: move to shot2 same target
-  // - if HIT on shot2: resolve target HIT, move to next target shot1
-  // - if MISS on shot2: resolve target MISS, move to next target shot1
-  const idx = live.targetIndex;
-  const t = live.targets[idx];
-
-  if(live.shot === 1){
-    if(outcome === "HIT"){
-      t.final = "HIT";
-      live.targetIndex = Math.min(24, idx+1);
-      live.shot = 1;
-    }else{
-      live.shot = 2;
-    }
-  }else{
-    // shot 2
-    if(outcome === "HIT"){
-      t.final = "HIT";
-    }else{
-      t.final = "MISS";
-    }
-    live.targetIndex = Math.min(24, idx+1);
-    live.shot = 1;
-  }
-
-  clampCursor();
-  renderAllLive();
-
-  // if reached last target and it is resolved
-  if(isRoundComplete()){
-    // stay on last cell but show completion
-    els.curTarget.textContent = "25";
-    els.curShot.textContent = "1";
-  }
-}
-
-function recordAttempt(zoneKey){
-  if(!live) return;
-  syncMetaFromInputs();
-
-  const idx = live.targetIndex;
-  const t = live.targets[idx];
-
-  // If target already resolved, try to move forward to first unresolved
-  if(t.final){
-    const next = live.targets.findIndex(x => !x.final);
-    if(next >= 0){
-      live.targetIndex = next;
-      live.shot = 1;
-    }else{
-      renderAllLive();
-      return;
-    }
-  }
-
-  const attempt = {
-    target: live.targetIndex,
-    shot: live.shot,
-    outcome: live.outcomeMode,
-    zone: zoneKey,
-    ts: new Date().toISOString(),
-  };
-
-  // Save previous state for undo
-  live.history.push(JSON.stringify(live.targets));
-
-  if(live.shot === 1){
-    t.shot1 = attempt;
-    // also compute final if HIT
-    if(live.outcomeMode === "HIT"){
-      t.final = "HIT";
-    }
-  }else{
-    t.shot2 = attempt;
-    // compute final
-    if(live.outcomeMode === "HIT"){
-      t.final = "HIT";
-    }else{
-      t.final = "MISS";
-    }
-  }
-
-  gotoNextAfterAttempt(live.outcomeMode);
-}
-
-els.btnUndo.addEventListener("click", ()=>{
-  if(!live || live.history.length === 0) return;
-  const prev = live.history.pop();
-  try{
-    live.targets = JSON.parse(prev);
-  }catch(e){}
-  // Recompute cursor to first unresolved
-  const next = live.targets.findIndex(x => !x.final);
-  if(next >= 0){
-    live.targetIndex = next;
-    // decide shot: if shot1 exists and final not set => shot2, else shot1
-    const t = live.targets[next];
-    live.shot = (t.shot1 && !t.final) ? 2 : 1;
-  }else{
-    live.targetIndex = 24;
-    live.shot = 1;
-  }
-  renderAllLive();
-});
-
-els.btnReset.addEventListener("click", ()=>{
-  if(!live) return;
-  if(confirm("Reset this live round? (This won’t delete saved rounds)")){
-    newLiveRound();
-  }
-});
-
-els.btnSave.addEventListener("click", ()=>{
-  if(!live) return;
-  syncMetaFromInputs();
-
-  // Require at least one attempt
-  const anyAttempt = live.targets.some(t => t.shot1 || t.shot2);
-  if(!anyAttempt){
-    alert("Nothing logged yet — record at least one zone before saving.");
-    return;
-  }
-
-  // finalize unresolved targets as MISS (optional) — safer: keep null.
-  // Here: keep null but score will ignore unresolved as pending.
-  const rounds = loadRounds();
-  // compute stats snapshot
-  const score = computeScore(live);
-  const snapshot = {
-    ...live,
-    scoreHits: score.hits,
-    scoreMiss: score.miss,
-    attempts: score.attempts,
-  };
-  rounds.unshift(snapshot);
-  saveRounds(rounds);
-  alert("Saved ✅");
-  refreshStats();
-  refreshSaved();
-});
-
-function computeScore(round){
-  let hits = 0, miss = 0, attempts = 0;
-  round.targets.forEach(t=>{
-    if(t.shot1) attempts++;
-    if(t.shot2) attempts++;
-    if(t.final === "HIT") hits++;
-    if(t.final === "MISS") miss++;
-  });
-  return {hits, miss, attempts};
-}
-
-function renderAllLive(){
-  if(!live) return;
-  // cursor display
-  els.curTarget.textContent = String(live.targetIndex + 1);
-  setShot(live.shot);
-  setOutcomeMode(live.outcomeMode);
-
-  // stats
-  const sc = computeScore(live);
-  els.scoreHits.textContent = sc.hits;
-  els.scoreMiss.textContent = sc.miss;
-  els.attemptsLogged.textContent = sc.attempts;
-
-  // grid render (25)
-  els.roundGrid.innerHTML = "";
-  live.targets.forEach((t, i)=>{
-    const div = document.createElement("div");
-    div.className = "cell";
-    if(i === live.targetIndex && !t.final){
-      div.style.outline = "2px solid rgba(255,255,255,.18)";
-    }
-    const n = document.createElement("div");
-    n.className = "n mono";
-    n.textContent = `#${i+1}`;
-
-    const v = document.createElement("div");
-    v.className = "v";
-    const s1 = t.shot1 ? (t.shot1.outcome === "HIT" ? "✅" : "❌") + " " + t.shot1.zone : "—";
-    const s2 = t.shot2 ? (t.shot2.outcome === "HIT" ? "✅" : "❌") + " " + t.shot2.zone : "—";
-    const fin = t.final ? (t.final === "HIT" ? "HIT" : "MISS") : "PENDING";
-    v.innerHTML = `<span class="mono">${fin}</span><div class="tag"><span class="dot ${t.final==="HIT"?"green":t.final==="MISS"?"red":"gray"}"></span><span class="mono">1:${s1} • 2:${s2}</span></div>`;
-
-    div.appendChild(n);
-    div.appendChild(v);
-    els.roundGrid.appendChild(div);
-  });
-}
-
-/* =========================
-   SVG Diagrams (5 wedges)
-========================= */
-function polar(cx, cy, r, aDeg){
-  const a = (aDeg - 90) * Math.PI/180;
-  return {x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)};
-}
-function wedgePath(cx, cy, rOuter, rInner, a0, a1){
-  const p0 = polar(cx, cy, rOuter, a0);
-  const p1 = polar(cx, cy, rOuter, a1);
-  const p2 = polar(cx, cy, rInner, a1);
-  const p3 = polar(cx, cy, rInner, a0);
-  const large = (a1 - a0) > 180 ? 1 : 0;
-  return [
-    `M ${p0.x} ${p0.y}`,
-    `A ${rOuter} ${rOuter} 0 ${large} 1 ${p1.x} ${p1.y}`,
-    `L ${p2.x} ${p2.y}`,
-    `A ${rInner} ${rInner} 0 ${large} 0 ${p3.x} ${p3.y}`,
-    "Z"
-  ].join(" ");
-}
-function drawDiagram(svgEl, theme, onPick, valuesMap){
-  // theme: {fill, stroke, text, accent}
-  // valuesMap: optional {HL: number, ...} to display in stats
-  const w = 320, h = 200;
-  const cx = 160, cy = 190;
-  const rOuter = 150, rInner = 70;
-
-  svgEl.innerHTML = "";
-
-  // background arc line
-  const base = document.createElementNS("http://www.w3.org/2000/svg","path");
-  base.setAttribute("d", wedgePath(cx, cy, rOuter, rOuter-2, 210, 330));
-  base.setAttribute("fill","rgba(255,255,255,.03)");
-  base.setAttribute("stroke","rgba(255,255,255,.05)");
-  svgEl.appendChild(base);
-
-  // zone wedges (5)
-  const angles = [
-    {key:"HL", a0:210, a1:234},
-    {key:"SL", a0:234, a1:258},
-    {key:"C",  a0:258, a1:282},
-    {key:"SR", a0:282, a1:306},
-    {key:"HR", a0:306, a1:330},
-  ];
-
-  angles.forEach((z, idx)=>{
-    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
-    path.setAttribute("d", wedgePath(cx, cy, rOuter, rInner, z.a0, z.a1));
-    path.setAttribute("fill", theme.fill);
-    path.setAttribute("fill-opacity", "0.22");
-    path.setAttribute("stroke", theme.stroke);
-    path.setAttribute("stroke-opacity","0.35");
-    path.setAttribute("stroke-width","2");
-    path.style.cursor = onPick ? "pointer" : "default";
-
-    // hover via inline events (mobile ok)
-    path.addEventListener("pointerdown", (e)=>{
-      if(!onPick) return;
-      e.preventDefault();
-      onPick(z.key);
-    });
-
-    svgEl.appendChild(path);
-
-    // label
-    const mid = (z.a0 + z.a1)/2;
-    const p = polar(cx, cy, (rOuter + rInner)/2, mid);
-    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
-    txt.setAttribute("x", p.x);
-    txt.setAttribute("y", p.y);
-    txt.setAttribute("text-anchor","middle");
-    txt.setAttribute("dominant-baseline","middle");
-    txt.setAttribute("font-size","12");
-    txt.setAttribute("font-weight","800");
-    txt.setAttribute("fill", theme.text);
-    txt.textContent = ["HL","SL","C","SR","HR"][idx];
-    svgEl.appendChild(txt);
-
-    // value (stats)
-    if(valuesMap){
-      const pv = polar(cx, cy, (rOuter + rInner)/2 + 22, mid);
-      const v = document.createElementNS("http://www.w3.org/2000/svg","text");
-      v.setAttribute("x", pv.x);
-      v.setAttribute("y", pv.y);
-      v.setAttribute("text-anchor","middle");
-      v.setAttribute("dominant-baseline","middle");
-      v.setAttribute("font-size","12");
-      v.setAttribute("font-weight","750");
-      v.setAttribute("fill", theme.accent);
-      const num = (valuesMap[z.key] ?? 0);
-      v.textContent = (Math.round(num*10)/10).toString();
-      svgEl.appendChild(v);
-    }
-  });
-
-  // center text
-  const center = document.createElementNS("http://www.w3.org/2000/svg","text");
-  center.setAttribute("x", cx);
-  center.setAttribute("y", cy-40);
-  center.setAttribute("text-anchor","middle");
-  center.setAttribute("dominant-baseline","middle");
-  center.setAttribute("font-size","11");
-  center.setAttribute("font-weight","700");
-  center.setAttribute("fill","rgba(255,255,255,.55)");
-  center.textContent = valuesMap ? "Direction" : "Tap a zone";
-  svgEl.appendChild(center);
-}
-
-drawDiagram(els.hitSvg,  {fill:"#22c55e", stroke:"#22c55e", text:"rgba(240,255,246,.95)", accent:"rgba(34,197,94,.95)"}, (zone)=>recordAttempt(zone), null);
-drawDiagram(els.missSvg, {fill:"#ef4444", stroke:"#ef4444", text:"rgba(255,240,240,.95)", accent:"rgba(239,68,68,.95)"}, (zone)=>recordAttempt(zone), null);
-
-// Also allow tapping the card button itself (noop) - already handled by path pointerdown.
-
-/* =========================
-   Stats (saved rounds)
-========================= */
-const statsEls = {
-  range: document.getElementById("statsRange"),
-  custom1: document.getElementById("statsCustom"),
-  custom2: document.getElementById("statsCustom2"),
-  from: document.getElementById("statsFrom"),
-  to: document.getElementById("statsTo"),
-  btn: document.getElementById("btnRefreshStats"),
-
-  kRounds: document.getElementById("kRounds"),
-  kAvg: document.getElementById("kAvg"),
-  kAvgMiss: document.getElementById("kAvgMiss"),
-  kHitPct: document.getElementById("kHitPct"),
-  kBest: document.getElementById("kBest"),
-  kWorst: document.getElementById("kWorst"),
-
-  missAvgTop: document.getElementById("missAvgTop"),
-  hitAvgTop: document.getElementById("hitAvgTop"),
-  missSvg: document.getElementById("statsMissSvg"),
-  hitSvg: document.getElementById("statsHitSvg"),
-  missHint: document.getElementById("statsMissHint"),
-  hitHint: document.getElementById("statsHitHint"),
-};
-
-statsEls.range.addEventListener("change", ()=>{
-  const isCustom = statsEls.range.value === "custom";
-  statsEls.custom1.style.display = isCustom ? "" : "none";
-  statsEls.custom2.style.display = isCustom ? "" : "none";
-});
-statsEls.btn.addEventListener("click", refreshStats);
-
-function refreshStats(){
-  const rounds = loadRounds();
-  const [from, to] = rangeToDates(statsEls.range.value, statsEls.from.value, statsEls.to.value);
-
-  const filtered = rounds.filter(r=>{
-    const d = parseRoundDate(r);
-    return inRange(d, from, to);
-  });
-
-  statsEls.kRounds.textContent = filtered.length;
-
-  if(filtered.length === 0){
-    statsEls.kAvg.textContent = "0.0";
-    statsEls.kAvgMiss.textContent = "0.0";
-    statsEls.kHitPct.textContent = "0%";
-    statsEls.kBest.textContent = "—";
-    statsEls.kWorst.textContent = "—";
-    statsEls.missAvgTop.textContent = "0.0";
-    statsEls.hitAvgTop.textContent = "0.0";
-    drawDiagram(statsEls.missSvg, {fill:"#ef4444", stroke:"#ef4444", text:"rgba(255,240,240,.95)", accent:"rgba(239,68,68,.95)"}, null, {HL:0,SL:0,C:0,SR:0,HR:0});
-    drawDiagram(statsEls.hitSvg,  {fill:"#22c55e", stroke:"#22c55e", text:"rgba(240,255,246,.95)", accent:"rgba(34,197,94,.95)"}, null, {HL:0,SL:0,C:0,SR:0,HR:0});
-    statsEls.missHint.textContent = "No data in this range.";
-    statsEls.hitHint.textContent = "No data in this range.";
-    return;
-  }
-
-  // averages
-  let totalHits=0, totalMiss=0, totalAttempts=0;
-  let best = null, worst = null;
-
-  const missDirTotals = {HL:0,SL:0,C:0,SR:0,HR:0};
-  const hitDirTotals  = {HL:0,SL:0,C:0,SR:0,HR:0};
-
-  filtered.forEach(r=>{
-    // score based on final targets
-    let hits=0, miss=0, attempts=0;
-
-    // direction counts: count zones for attempts (hit attempts and miss attempts)
-    (r.targets || []).forEach(t=>{
-      if(t.shot1){ attempts++; if(t.shot1.outcome==="MISS"){ missDirTotals[t.shot1.zone]++; } else { hitDirTotals[t.shot1.zone]++; } }
-      if(t.shot2){ attempts++; if(t.shot2.outcome==="MISS"){ missDirTotals[t.shot2.zone]++; } else { hitDirTotals[t.shot2.zone]++; } }
-
-      if(t.final==="HIT") hits++;
-      if(t.final==="MISS") miss++;
-    });
-
-    totalHits += hits;
-    totalMiss += miss;
-    totalAttempts += attempts;
-
-    if(best === null || hits > best.hits) best = {hits, r};
-    if(worst === null || hits < worst.hits) worst = {hits, r};
-  });
-
-  const roundsCount = filtered.length;
-  const avg = totalHits / roundsCount;
-  const avgMiss = totalMiss / roundsCount;
-  const hitPct = (totalHits / (roundsCount*25)) * 100;
-
-  statsEls.kAvg.textContent = (Math.round(avg*10)/10).toFixed(1);
-  statsEls.kAvgMiss.textContent = (Math.round(avgMiss*10)/10).toFixed(1);
-  statsEls.kHitPct.textContent = (Math.round(hitPct*10)/10).toFixed(1) + "%";
-
-  statsEls.kBest.textContent = best ? `${best.hits}/25 • ${best.r.date || best.r.createdAt?.slice(0,10) || ""}` : "—";
-  statsEls.kWorst.textContent = worst ? `${worst.hits}/25 • ${worst.r.date || worst.r.createdAt?.slice(0,10) || ""}` : "—";
-
-  // average per round direction (normalize by rounds, but counts are attempts, not targets)
-  const missDirAvg = {};
-  const hitDirAvg = {};
-  Object.keys(missDirTotals).forEach(k=>{
-    missDirAvg[k] = missDirTotals[k] / roundsCount;
-    hitDirAvg[k] = hitDirTotals[k] / roundsCount;
-  });
-
-  statsEls.missAvgTop.textContent = (Math.round(avgMiss*10)/10).toFixed(1);
-  statsEls.hitAvgTop.textContent = (Math.round(avg*10)/10).toFixed(1);
-
-  drawDiagram(statsEls.missSvg, {fill:"#ef4444", stroke:"#ef4444", text:"rgba(255,240,240,.95)", accent:"rgba(239,68,68,.95)"}, null, missDirAvg);
-  drawDiagram(statsEls.hitSvg,  {fill:"#22c55e", stroke:"#22c55e", text:"rgba(240,255,246,.95)", accent:"rgba(34,197,94,.95)"}, null, hitDirAvg);
-
-  const worstMissDir = Object.entries(missDirAvg).sort((a,b)=>b[1]-a[1])[0];
-  const bestHitDir = Object.entries(hitDirAvg).sort((a,b)=>b[1]-a[1])[0];
-
-  statsEls.missHint.textContent =
-    `Most missed direction (avg/round): ${worstMissDir[0]} (${(Math.round(worstMissDir[1]*10)/10).toFixed(1)})`;
-  statsEls.hitHint.textContent =
-    `Most hit direction (avg/round): ${bestHitDir[0]} (${(Math.round(bestHitDir[1]*10)/10).toFixed(1)})`;
-}
-
-/* =========================
-   Saved rounds list + PDF export
-========================= */
-const savedEls = {
-  range: document.getElementById("savedRange"),
-  custom1: document.getElementById("savedCustom"),
-  custom2: document.getElementById("savedCustom2"),
-  from: document.getElementById("savedFrom"),
-  to: document.getElementById("savedTo"),
-  btn: document.getElementById("btnRefreshSaved"),
-  list: document.getElementById("savedList"),
-  empty: document.getElementById("savedEmpty"),
-  delAll: document.getElementById("btnDeleteAll"),
-};
-
-savedEls.range.addEventListener("change", ()=>{
-  const isCustom = savedEls.range.value === "custom";
-  savedEls.custom1.style.display = isCustom ? "" : "none";
-  savedEls.custom2.style.display = isCustom ? "" : "none";
-});
-savedEls.btn.addEventListener("click", refreshSaved);
-
-savedEls.delAll.addEventListener("click", ()=>{
-  const rounds = loadRounds();
-  if(rounds.length === 0) return;
-  if(confirm("Delete ALL saved rounds on this device? This cannot be undone.")){
-    saveRounds([]);
-    refreshSaved();
-    refreshStats();
-  }
-});
-
-function refreshSaved(){
-  const rounds = loadRounds();
-  const [from, to] = rangeToDates(savedEls.range.value, savedEls.from.value, savedEls.to.value);
-
-  const filtered = rounds.filter(r=>{
-    const d = parseRoundDate(r);
-    return inRange(d, from, to);
-  });
-
-  savedEls.list.innerHTML = "";
-  savedEls.empty.style.display = filtered.length ? "none" : "";
-
-  filtered.forEach(r=>{
-    const sc = computeScore(r);
-    const div = document.createElement("div");
-    div.className = "roundItem";
-
-    const club = (r.club || "—");
-    const field = (r.field || "—");
-    const date = (r.date || (r.createdAt ? r.createdAt.slice(0,10) : "—"));
-    const notes = (r.notes || "");
-
-    div.innerHTML = `
-      <div class="roundTop">
-        <div class="meta">
-          <b>${sc.hits}/25 <span class="mono" style="color:var(--muted);font-weight:700">(${sc.attempts} attempts)</span></b>
-          <small>📍 ${escapeHtml(club)} • ${escapeHtml(field)} • 🗓️ ${escapeHtml(date)}</small>
-          ${notes ? `<small class="hint">${escapeHtml(notes)}</small>` : ``}
-        </div>
-        <div class="roundBtns noPrint">
-          <button class="btn small" data-action="pdf">Export PDF</button>
-          <button class="btn small danger" data-action="delete">Delete</button>
-        </div>
-      </div>
-    `;
-
-    div.querySelector('[data-action="delete"]').addEventListener("click", ()=>{
-      const all = loadRounds();
-      const idx = all.findIndex(x=>x.id===r.id);
-      if(idx>=0){
-        all.splice(idx,1);
-        saveRounds(all);
-        refreshSaved();
-        refreshStats();
-      }
-    });
-
-    div.querySelector('[data-action="pdf"]').addEventListener("click", ()=>{
-      exportRoundToPDF(r);
-    });
-
-    savedEls.list.appendChild(div);
-  });
-}
-
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function exportRoundToPDF(round){
-  const sc = computeScore(round);
-  const date = (round.date || (round.createdAt ? round.createdAt.slice(0,10) : "—"));
-  const club = round.club || "—";
-  const field = round.field || "—";
-  const notes = round.notes || "";
-
-  // Build print-friendly HTML with a 1x25 grid
-  const cells = (round.targets || []).map((t, i)=>{
-    const fin = t.final || "PENDING";
-    const s1 = t.shot1 ? `${t.shot1.outcome} ${t.shot1.zone}` : "—";
-    const s2 = t.shot2 ? `${t.shot2.outcome} ${t.shot2.zone}` : "—";
-    return `
-      <div class="printCell">
-        <b>#${i+1} — ${fin}</b>
-        <div>1: ${s1}</div>
-        <div>2: ${s2}</div>
-      </div>
-    `;
-  }).join("");
-
-  const html = `
-<!doctype html>
-<html>
-<head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Trap Round PDF</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Trap Tracker — Aamr Benbrahim</title>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;margin:18px;color:#000;}
-    .printCard{border:1px solid #ddd;padding:14px;border-radius:10px;margin:10px 0;}
-    .printMeta{font-size:12px;line-height:1.45}
-    .printGrid{display:grid;grid-template-columns: repeat(25, 1fr);gap:6px;margin-top:12px}
-    .printCell{border:1px solid #ddd;min-height:44px;padding:4px;font-size:10px;}
-    .printCell b{display:block;font-size:11px;margin-bottom:3px;}
-    @media print{
-      body{margin:10mm;}
+    :root{
+      --bg:#0b0c10; --card:#12141a; --muted:#9aa3b2; --text:#eef2ff; --border:#232735;
+      --green:#22c55e; --red:#ef4444; --orange:#f97316; --yellow:#eab308;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
     }
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;
+      background:linear-gradient(180deg,#090a0f,#0b0c10); color:var(--text)}
+    .wrap{max-width:1020px;margin:0 auto;padding:14px}
+    h1{margin:6px 0 2px;font-size:20px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:960px){ .grid{grid-template-columns: 1.25fr .95fr} }
+
+    .card{background:rgba(18,20,26,.92);border:1px solid var(--border);border-radius:18px;padding:12px;box-shadow:var(--shadow)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    label{font-size:12px;color:var(--muted);display:block;margin:0 0 6px}
+    input, textarea, select{
+      width:100%; padding:10px 12px; border-radius:14px; border:1px solid var(--border);
+      background:#0f1118; color:var(--text); outline:none;
+    }
+    textarea{min-height:74px; resize:vertical}
+
+    .btn{
+      border:1px solid var(--border); background:#0f1118; color:var(--text);
+      padding:10px 12px; border-radius:16px; font-weight:800;
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn:active{transform:scale(.99)}
+    .btn.primary{background:#1b2030;border-color:#2a3150}
+    .btn.danger{background:#2a1212;border-color:#4b1f1f}
+
+    /* BIG tap buttons */
+    .tapGrid{display:grid;grid-template-columns:1fr 1fr; gap:10px}
+    .tap{
+      padding:18px 14px; border-radius:18px; border:1px solid var(--border);
+      font-size:18px; font-weight:950; letter-spacing:.2px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+      min-height:64px;
+    }
+    .tap small{display:block; font-size:12px; font-weight:800; opacity:.85; margin-top:4px}
+    .tap.hit{background:rgba(34,197,94,.14); border-color:rgba(34,197,94,.35)}
+    .tap.left{background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.28)}
+    .tap.center{background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.30)}
+    .tap.right{background:rgba(234,179,8,.12); border-color:rgba(234,179,8,.30)}
+
+    .statgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .stat{border:1px solid var(--border);border-radius:16px;padding:10px;background:#0f1118}
+    .stat .k{font-size:11px;color:var(--muted)}
+    .stat .v{font-size:18px;font-weight:950;margin-top:3px}
+    .stat .s{font-size:11px;color:var(--muted);margin-top:3px}
+
+    .pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+    .dot{width:10px;height:10px;border-radius:999px}
+
+    /* 25-shot grid */
+    .shotsWrap{margin-top:10px}
+    .shotGrid{
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:8px;
+    }
+    .shot{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 8px;
+      background:#0f1118;
+      text-align:center;
+      font-weight:950;
+      min-height:48px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+    }
+    .shot .meta{font-size:10px;font-weight:800;color:var(--muted);margin-top:3px}
+    .shot.hit{background:rgba(34,197,94,.10); border-color:rgba(34,197,94,.30); color:var(--green)}
+    .shot.l{background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.26); color:var(--red)}
+    .shot.c{background:rgba(249,115,22,.10); border-color:rgba(249,115,22,.26); color:var(--orange)}
+    .shot.r{background:rgba(234,179,8,.12); border-color:rgba(234,179,8,.26); color:var(--yellow)}
+    .shot.pending{opacity:.55}
+
+    .divider{height:1px;background:var(--border);margin:12px 0}
+    .small{font-size:12px;color:var(--muted)}
+    .list{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:560px){ .list{grid-template-columns:1fr 1fr} }
+
+    .round{border:1px solid var(--border);border-radius:18px;overflow:hidden;background:#0f1118}
+    .roundHead{padding:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:10px}
+    .meta2{font-size:12px;color:var(--muted)}
+    .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px}
+    .box{border:1px solid var(--border);border-radius:16px;padding:10px}
+    .box .k{font-size:11px;color:var(--muted)}
+    .box .v{font-size:18px;font-weight:950;margin-top:4px}
+    .g{background:rgba(34,197,94,.08)} .rr{background:rgba(239,68,68,.08)}
+    .oo{background:rgba(249,115,22,.08)} .yy{background:rgba(234,179,8,.08)}
+    .notes{padding:12px;color:#d7def0;font-size:13px;white-space:pre-wrap}
+
+    .filters{display:grid;gap:10px}
+    @media(min-width:720px){ .filters{grid-template-columns: 1.2fr 1fr 1fr 1fr} }
+    .hint{font-size:11px;color:var(--muted)}
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid var(--border); border-radius:999px; padding:6px 10px;
+      background:#0f1118; font-size:12px; font-weight:900;
+    }
+    .badge strong{font-weight:950}
+    .badge.left{border-color:rgba(239,68,68,.35)}
+    .badge.center{border-color:rgba(249,115,22,.35)}
+    .badge.right{border-color:rgba(234,179,8,.35)}
+
+    /* Best/Worst pills */
+    .pillScore{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      background:#0f1118;font-size:12px;font-weight:950;
+      margin-right:6px;
+      white-space:nowrap;
+    }
+    .pillScore.good{border-color:rgba(34,197,94,.35); color:var(--green)}
+    .pillScore.mid{border-color:rgba(249,115,22,.35); color:var(--orange)}
+    .pillScore.low{border-color:rgba(239,68,68,.35); color:var(--red)}
   </style>
 </head>
 <body>
-  <div class="printCard">
-    <div class="printMeta">
-      <div><b>Score:</b> ${sc.hits}/25 &nbsp; | &nbsp; <b>Attempts:</b> ${sc.attempts}</div>
-      <div><b>Date:</b> ${escapeHtml(date)} &nbsp; | &nbsp; <b>Club:</b> ${escapeHtml(club)} &nbsp; | &nbsp; <b>Field:</b> ${escapeHtml(field)}</div>
-      ${notes ? `<div><b>Notes:</b> ${escapeHtml(notes)}</div>` : ``}
+  <div class="wrap">
+    <h1>Trap Tracker — Aamr Benbrahim</h1>
+    <p class="sub">One tap per target. 25 shots = 5 stations × 5 targets. Colors: Hit=green, Left=red, Center=orange, Right=yellow.</p>
+
+    <div class="grid">
+      <!-- LIVE ROUND -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:950;font-size:16px">Live Round Mode</div>
+            <div class="small" id="statusLine">Ready.</div>
+          </div>
+          <div class="row" style="gap:8px">
+            <button class="btn" id="undoBtn">↩︎ Undo</button>
+            <button class="btn danger" id="resetRoundBtn">Reset round</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="statgrid">
+          <div class="stat"><div class="k">Station</div><div class="v" id="stationV">1/5</div></div>
+          <div class="stat"><div class="k">Shot</div><div class="v" id="shotV">0/25</div></div>
+          <div class="stat"><div class="k">Score</div><div class="v" id="scoreV">0/25</div></div>
+          <div class="stat"><div class="k">Hit %</div><div class="v" id="hitPctV">0%</div></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="tapGrid">
+          <button class="btn tap hit" id="tapHit">✅ HIT<small>Green</small></button>
+          <button class="btn tap left" id="tapLeft">❌ MISS LEFT<small>Red</small></button>
+          <button class="btn tap center" id="tapCenter">❌ MISS CENTER<small>Orange</small></button>
+          <button class="btn tap right" id="tapRight">❌ MISS RIGHT<small>Yellow</small></button>
+        </div>
+
+        <div class="shotsWrap">
+          <div class="row" style="justify-content:space-between; margin-top:12px">
+            <div class="row" style="gap:10px">
+              <div class="pill"><span class="dot" style="background:var(--green)"></span>Hit</div>
+              <div class="pill"><span class="dot" style="background:var(--red)"></span>Left</div>
+              <div class="pill"><span class="dot" style="background:var(--orange)"></span>Center</div>
+              <div class="pill"><span class="dot" style="background:var(--yellow)"></span>Right</div>
+            </div>
+            <div class="small">Tap buttons above, grid fills automatically.</div>
+          </div>
+
+          <div class="shotGrid" id="shotGrid" style="margin-top:10px"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div style="flex:1;min-width:160px">
+            <label>Date</label>
+            <input id="date" type="date" />
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label>Club (optional)</label>
+            <input id="club" placeholder="e.g. Rabat Shooting Club" />
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label>Field (optional)</label>
+            <input id="field" placeholder="e.g. Field 2" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1;min-width:160px">
+            <label>Notes (optional)</label>
+            <textarea id="notes" placeholder="Wind, light, ammo, focus cue, what felt off..."></textarea>
+          </div>
+        </div>
+
+        <div class="row" style="justify-content:space-between; margin-top:8px">
+          <div class="small">When you reach 25/25, you can save the round.</div>
+          <button class="btn primary" id="saveRoundBtn">Save round</button>
+        </div>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="card">
+        <div style="font-weight:950;font-size:16px">Overview</div>
+        <div class="small" id="overviewSubtitle">Simple stats for the selected period</div>
+
+        <div class="divider"></div>
+
+        <div class="filters">
+          <div>
+            <label>Time range</label>
+            <select id="rangeSel">
+              <option value="today">Today</option>
+              <option value="week">This week</option>
+              <option value="month">This month</option>
+              <option value="last3">Last 3 months</option>
+              <option value="last6">Last 6 months</option>
+              <option value="year">This year</option>
+              <option value="all">All time</option>
+              <option value="monthPick">Past month…</option>
+            </select>
+            <div class="hint">Pick “Past month…” to choose any month.</div>
+          </div>
+
+          <div>
+            <label>Past months</label>
+            <select id="monthSel" disabled>
+              <option value="">Select month…</option>
+            </select>
+            <div class="hint">Only active when “Past month…” is selected.</div>
+          </div>
+
+          <div>
+            <label>Club (optional)</label>
+            <select id="clubSel">
+              <option value="all">All clubs</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Field (optional)</label>
+            <select id="fieldSel">
+              <option value="all">All fields</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="justify-content:space-between; gap:10px">
+          <div class="row" style="gap:10px; flex-wrap:wrap">
+            <span class="badge" id="mostMissedBadge" style="display:none"></span>
+            <span class="badge" id="insightBadge" style="display:none"></span>
+          </div>
+          <div class="small" id="rangeCount">0 rounds</div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <!-- Top 3 stats -->
+        <div class="statgrid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <div class="stat">
+            <div class="k">Average</div>
+            <div class="v" id="avgHits">0.0/25</div>
+            <div class="s" id="avgHitsSub">Avg hit %: 0%</div>
+          </div>
+
+          <div class="stat">
+            <div class="k">Best / Worst</div>
+            <div class="v" id="bestWorst">—</div>
+            <div class="s" id="bestWorstSub">Colors: ≥20 green • 18–19 orange • <18 red</div>
+          </div>
+
+          <div class="stat">
+            <div class="k">Last 10 rounds</div>
+            <div class="v" id="last10">—</div>
+            <div class="s" id="last10Sub">Avg hits (if ≥10)</div>
+          </div>
+        </div>
+
+        <!-- Miss diagram -->
+        <div class="divider"></div>
+
+        <div class="stat" style="background:#0f1118">
+          <div class="k">Average misses per round</div>
+
+          <div class="row" style="justify-content:space-between; align-items:flex-start; gap:12px; margin-top:6px">
+            <div style="flex:1;text-align:center">
+              <div style="font-weight:950;color:var(--red);font-size:18px" id="avgML">0.0</div>
+              <div class="small">LEFT</div>
+            </div>
+
+            <div style="flex:1;text-align:center">
+              <div style="font-weight:950;color:var(--orange);font-size:18px" id="avgMC">0.0</div>
+              <div class="small">CENTER</div>
+            </div>
+
+            <div style="flex:1;text-align:center">
+              <div style="font-weight:950;color:var(--yellow);font-size:18px" id="avgMR">0.0</div>
+              <div class="small">RIGHT</div>
+            </div>
+          </div>
+
+          <svg viewBox="0 0 320 90" width="100%" height="90" style="margin-top:8px">
+            <path d="M160 80 C120 60, 90 40, 60 18" fill="none" stroke="var(--red)" stroke-width="6" stroke-linecap="round"/>
+            <path d="M160 80 C160 58, 160 40, 160 16" fill="none" stroke="var(--orange)" stroke-width="6" stroke-linecap="round"/>
+            <path d="M160 80 C200 60, 230 40, 260 18" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="160" cy="80" r="7" fill="#0f1118" stroke="var(--border)" stroke-width="2"/>
+          </svg>
+
+          <div class="s" id="missDiagramSub">Based on selected period</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="small">
+          Goal: reduce your <b>most missed direction</b> first — it usually gives the fastest improvement.
+        </div>
+      </div>
     </div>
-    <div class="printGrid">
-      ${cells}
+
+    <!-- SAVED ROUNDS -->
+    <div class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div style="font-weight:950;font-size:16px">Saved Rounds</div>
+          <div class="small" id="countLine">0 total</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="filters" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+        <div>
+          <label>Show</label>
+          <select id="savedRange">
+            <option value="today">Today</option>
+            <option value="day">A specific day…</option>
+            <option value="all">All rounds</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Date</label>
+          <input id="savedDate" type="date" disabled />
+        </div>
+
+        <div>
+          <label>Club</label>
+          <select id="savedClub">
+            <option value="all">All clubs</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Field</label>
+          <select id="savedField">
+            <option value="all">All fields</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="list" id="list"></div>
+      <div id="empty" class="small" style="display:none;margin-top:10px">No rounds found for these filters.</div>
     </div>
+
+    <p class="small" style="margin:14px 2px 28px">
+      Next upgrades: station-by-station stats (S1..S5 patterns) + vibration feedback per shot.
+    </p>
   </div>
-  <script>
-    window.onload = () => { window.print(); };
-  </script>
+
+<script>
+  const KEY = "trap_tracker_live_issf_v3_aamr";
+  const $ = (id) => document.getElementById(id);
+
+  const pct = (a,b)=> b? Math.round((a/b)*1000)/10 : 0;
+
+  function todayISO(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  $("date").value = todayISO();
+  $("savedDate").value = todayISO();
+
+  function uid(){
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"\"":'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function startOfWeek(d){
+    const x = new Date(d);
+    const day = (x.getDay() + 6) % 7; // Monday = 0
+    x.setDate(x.getDate() - day);
+    x.setHours(0,0,0,0);
+    return x;
+  }
+  function startOfMonth(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), 1);
+    x.setHours(0,0,0,0);
+    return x;
+  }
+  function startOfYear(d){
+    const x = new Date(d.getFullYear(), 0, 1);
+    x.setHours(0,0,0,0);
+    return x;
+  }
+  function addMonths(d, n){
+    const x = new Date(d);
+    x.setMonth(x.getMonth() + n);
+    return x;
+  }
+  function parseISODate(iso){
+    const [y,m,dd] = (iso||"").split("-").map(Number);
+    if(!y||!m||!dd) return null;
+    const x = new Date(y, m-1, dd);
+    x.setHours(0,0,0,0);
+    return x;
+  }
+  function monthKey(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  }
+  function monthLabel(key){
+    const [y,m] = key.split("-").map(Number);
+    const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${names[m-1]} ${y}`;
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch{ return []; }
+  }
+  function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+
+  // LIVE ROUND STATE (25 shots): 'H','L','C','R'
+  let liveShots = [];
+  let rounds = load();
+
+  function countsFromShots(shots){
+    let hit=0, ml=0, mc=0, mr=0;
+    for(const s of shots){
+      if(s==="H") hit++;
+      else if(s==="L") ml++;
+      else if(s==="C") mc++;
+      else if(s==="R") mr++;
+    }
+    return {shots: 25, hit, ml, mc, mr};
+  }
+  function stationIndexFromShotIndex(i){
+    return Math.min(4, Math.floor(i/5));
+  }
+
+  function renderLive(){
+    const idx = liveShots.length;
+    const station = stationIndexFromShotIndex(Math.max(0, idx)) + 1;
+    const {hit} = countsFromShots(liveShots);
+
+    $("stationV").textContent = `${Math.min(5, station)}/5`;
+    $("shotV").textContent = `${idx}/25`;
+    $("scoreV").textContent = `${hit}/25`;
+    $("hitPctV").textContent = `${pct(hit, Math.max(1, idx))}%`;
+
+    if(idx === 0) $("statusLine").textContent = "Ready. Tap one button per target.";
+    else if(idx < 25) $("statusLine").textContent = `Live… Station ${Math.min(5, station)} • Shot ${idx+1}/25`;
+    else $("statusLine").textContent = "Round complete. Save it or reset.";
+
+    const done = idx >= 25;
+    $("tapHit").disabled = done;
+    $("tapLeft").disabled = done;
+    $("tapCenter").disabled = done;
+    $("tapRight").disabled = done;
+    $("undoBtn").disabled = (idx === 0);
+
+    const grid = $("shotGrid");
+    grid.innerHTML = "";
+    for(let i=0;i<25;i++){
+      const s = liveShots[i];
+      const st = Math.floor(i/5) + 1;
+      const inSt = (i % 5) + 1;
+      const el = document.createElement("div");
+      el.className = "shot " + (
+        s==="H" ? "hit" :
+        s==="L" ? "l" :
+        s==="C" ? "c" :
+        s==="R" ? "r" : "pending"
+      );
+      const label = s==="H" ? "HIT" : s==="L" ? "LEFT" : s==="C" ? "CENTER" : s==="R" ? "RIGHT" : "—";
+      el.innerHTML = `<div>${label}</div><div class="meta">S${st} • #${inSt}</div>`;
+      grid.appendChild(el);
+    }
+  }
+
+  function pushShot(code){
+    if(liveShots.length >= 25) return;
+    liveShots.push(code);
+    renderLive();
+  }
+
+  $("tapHit").addEventListener("click", ()=>pushShot("H"));
+  $("tapLeft").addEventListener("click", ()=>pushShot("L"));
+  $("tapCenter").addEventListener("click", ()=>pushShot("C"));
+  $("tapRight").addEventListener("click", ()=>pushShot("R"));
+
+  $("undoBtn").addEventListener("click", ()=>{
+    liveShots.pop();
+    renderLive();
+  });
+
+  $("resetRoundBtn").addEventListener("click", ()=>{
+    liveShots = [];
+    renderLive();
+  });
+
+  $("saveRoundBtn").addEventListener("click", ()=>{
+    if(liveShots.length !== 25){
+      $("statusLine").textContent = `You are at ${liveShots.length}/25. Finish the round to save.`;
+      return;
+    }
+    const c = countsFromShots(liveShots);
+    rounds.unshift({
+      id: uid(),
+      date: $("date").value || todayISO(),
+      club: $("club").value.trim(),
+      field: $("field").value.trim(),
+      notes: $("notes").value,
+      liveShots: liveShots.slice(),
+      ...c,
+      createdAt: Date.now()
+    });
+    save(rounds);
+
+    liveShots = [];
+    $("notes").value = "";
+    renderAll();
+  });
+
+  function unique(list){
+    return Array.from(new Set(list.filter(Boolean)));
+  }
+
+  function rebuildDropdowns(){
+    const clubs = unique(rounds.map(r => (r.club||"").trim())).sort((a,b)=>a.localeCompare(b));
+    const fields = unique(rounds.map(r => (r.field||"").trim())).sort((a,b)=>a.localeCompare(b));
+
+    // Overview selectors
+    const clubSel = $("clubSel");
+    const fieldSel = $("fieldSel");
+    const keepClub = clubSel.value || "all";
+    const keepField = fieldSel.value || "all";
+
+    clubSel.innerHTML = `<option value="all">All clubs</option>` + clubs.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    fieldSel.innerHTML = `<option value="all">All fields</option>` + fields.map(f=>`<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join("");
+
+    clubSel.value = clubs.includes(keepClub) ? keepClub : "all";
+    fieldSel.value = fields.includes(keepField) ? keepField : "all";
+
+    // Saved rounds selectors
+    const savedClub = $("savedClub");
+    const savedField = $("savedField");
+    const keepSC = savedClub.value || "all";
+    const keepSF = savedField.value || "all";
+
+    savedClub.innerHTML = `<option value="all">All clubs</option>` + clubs.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    savedField.innerHTML = `<option value="all">All fields</option>` + fields.map(f=>`<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join("");
+
+    savedClub.value = clubs.includes(keepSC) ? keepSC : "all";
+    savedField.value = fields.includes(keepSF) ? keepSF : "all";
+
+    // Month dropdown
+    const monthSel = $("monthSel");
+    const monthKeys = unique(rounds.map(r => {
+      const d = parseISODate(r.date);
+      return d ? monthKey(d) : "";
+    })).sort((a,b)=> (a>b ? -1 : 1)); // newest first
+
+    const keepMonth = monthSel.value || "";
+    monthSel.innerHTML = `<option value="">Select month…</option>` + monthKeys.map(k=>`<option value="${k}">${monthLabel(k)}</option>`).join("");
+    monthSel.value = monthKeys.includes(keepMonth) ? keepMonth : "";
+  }
+
+  function filterByMeta(list, clubVal, fieldVal){
+    const c = clubVal || "all";
+    const f = fieldVal || "all";
+    return list.filter(r => {
+      const okC = (c==="all") || ((r.club||"").trim() === c);
+      const okF = (f==="all") || ((r.field||"").trim() === f);
+      return okC && okF;
+    });
+  }
+
+  function filterByRange(list){
+    const now = new Date(); now.setHours(0,0,0,0);
+    const range = $("rangeSel").value;
+    const monthPick = $("monthSel").value;
+
+    let start = null, end = null; // [start, end)
+    if(range === "all"){
+      start = null; end = null;
+    } else if(range === "today"){
+      start = new Date(now);
+      end = new Date(now); end.setDate(end.getDate()+1);
+    } else if(range === "week"){
+      start = startOfWeek(now);
+      end = new Date(start); end.setDate(end.getDate()+7);
+    } else if(range === "month"){
+      start = startOfMonth(now);
+      end = addMonths(start, 1);
+    } else if(range === "last3"){
+      end = addMonths(startOfMonth(now), 1);
+      start = addMonths(end, -3);
+    } else if(range === "last6"){
+      end = addMonths(startOfMonth(now), 1);
+      start = addMonths(end, -6);
+    } else if(range === "year"){
+      start = startOfYear(now);
+      end = new Date(now.getFullYear()+1, 0, 1);
+    } else if(range === "monthPick"){
+      if(!monthPick) return [];
+      const [y,m] = monthPick.split("-").map(Number);
+      start = new Date(y, m-1, 1); start.setHours(0,0,0,0);
+      end = new Date(y, m, 1); end.setHours(0,0,0,0);
+    }
+
+    return list.filter(r=>{
+      const d = parseISODate(r.date);
+      if(!d) return false;
+      if(!start && !end) return true;
+      return (d >= start && d < end);
+    });
+  }
+
+  function tier(score){
+    if(score >= 20) return "good";
+    if(score >= 18) return "mid";
+    return "low";
+  }
+
+  function renderOverview(){
+    const isMonthPick = $("rangeSel").value === "monthPick";
+    $("monthSel").disabled = !isMonthPick;
+
+    let list = rounds.slice();
+    list = filterByMeta(list, $("clubSel").value, $("fieldSel").value);
+    list = filterByRange(list);
+
+    $("rangeCount").textContent = `${list.length} rounds`;
+
+    if(list.length === 0){
+      $("avgHits").textContent = "0.0/25";
+      $("avgHitsSub").textContent = "Avg hit %: 0%";
+      $("bestWorst").textContent = "—";
+      $("last10").textContent = "—";
+      $("last10Sub").textContent = "Avg hits (if ≥10)";
+      $("avgML").textContent = "0.0";
+      $("avgMC").textContent = "0.0";
+      $("avgMR").textContent = "0.0";
+      $("missDiagramSub").textContent = "Based on selected period";
+      $("mostMissedBadge").style.display = "none";
+      $("insightBadge").style.display = "none";
+      return;
+    }
+
+    const totalHit = list.reduce((s,r)=>s+(r.hit||0),0);
+    const totalL = list.reduce((s,r)=>s+(r.ml||0),0);
+    const totalC = list.reduce((s,r)=>s+(r.mc||0),0);
+    const totalR = list.reduce((s,r)=>s+(r.mr||0),0);
+
+    const avgHits = totalHit / list.length;
+    const avgPct = pct(totalHit, list.length*25);
+
+    const scores = list.map(r=> (r.hit||0));
+    const best = Math.max(...scores);
+    const worst = Math.min(...scores);
+
+    const byRecent = list.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const last10List = byRecent.slice(0,10);
+    const last10Avg = last10List.length ? (last10List.reduce((s,r)=>s+(r.hit||0),0) / last10List.length) : null;
+
+    const misses = [
+      {k:"LEFT", v: totalL, cls:"left", dot:"var(--red)"},
+      {k:"CENTER", v: totalC, cls:"center", dot:"var(--orange)"},
+      {k:"RIGHT", v: totalR, cls:"right", dot:"var(--yellow)"},
+    ].sort((a,b)=>b.v-a.v);
+
+    const topMiss = misses[0];
+
+    $("avgHits").textContent = `${avgHits.toFixed(1)}/25`;
+    $("avgHitsSub").textContent = `Avg hit %: ${avgPct}%`;
+
+    const bestStar = best >= 23 ? " ⭐" : "";
+    $("bestWorst").innerHTML = `
+      <span class="pillScore ${tier(best)}">Best: ${best}/25${bestStar}</span>
+      <span class="pillScore ${tier(worst)}">Worst: ${worst}/25</span>
+    `;
+
+    if(last10List.length >= 10){
+      $("last10").textContent = `${last10Avg.toFixed(1)}/25`;
+      $("last10Sub").textContent = `Average of last 10 rounds`;
+    } else {
+      $("last10").textContent = "—";
+      $("last10Sub").textContent = `Need 10 rounds (you have ${last10List.length})`;
+    }
+
+    const avgML = totalL / list.length;
+    const avgMC = totalC / list.length;
+    const avgMR = totalR / list.length;
+
+    $("avgML").textContent = avgML.toFixed(1);
+    $("avgMC").textContent = avgMC.toFixed(1);
+    $("avgMR").textContent = avgMR.toFixed(1);
+    $("missDiagramSub").textContent = `Avg misses per round (selected period)`;
+
+    const badge = $("mostMissedBadge");
+    badge.className = `badge ${topMiss.cls}`;
+    badge.style.display = "inline-flex";
+    badge.innerHTML = `<span class="dot" style="background:${topMiss.dot}"></span> Most missed: <strong>${topMiss.k}</strong> (${topMiss.v})`;
+
+    const insight = $("insightBadge");
+    insight.style.display = "inline-flex";
+    let text = "";
+    if(topMiss.k === "CENTER") text = "Focus: timing + trigger discipline";
+    if(topMiss.k === "LEFT") text = "Focus: line & move for LEFT targets";
+    if(topMiss.k === "RIGHT") text = "Focus: keep moving through RIGHT";
+    insight.className = "badge";
+    insight.innerHTML = `🎯 ${text}`;
+
+    const r = $("rangeSel").value;
+    const label =
+      r==="today" ? "Today" :
+      r==="week" ? "This week" :
+      r==="month" ? "This month" :
+      r==="last3" ? "Last 3 months" :
+      r==="last6" ? "Last 6 months" :
+      r==="year" ? "This year" :
+      r==="all" ? "All time" :
+      r==="monthPick" ? ( $("monthSel").value ? monthLabel($("monthSel").value) : "Past month" ) :
+      "Selected period";
+    $("overviewSubtitle").textContent = `Stats for: ${label}`;
+  }
+
+  function renderSaved(){
+    let list = rounds.slice();
+
+    const mode = $("savedRange").value;
+    const today = todayISO();
+    if(mode === "today"){
+      list = list.filter(r => (r.date||"") === today);
+      $("savedDate").disabled = true;
+    } else if(mode === "day"){
+      $("savedDate").disabled = false;
+      const d = $("savedDate").value || today;
+      list = list.filter(r => (r.date||"") === d);
+    } else {
+      $("savedDate").disabled = true;
+    }
+
+    list = filterByMeta(list, $("savedClub").value, $("savedField").value);
+    list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+    $("countLine").textContent = `${rounds.length} total • ${list.length} shown`;
+
+    const container = $("list");
+    container.innerHTML = "";
+    $("empty").style.display = list.length ? "none" : "block";
+
+    for(const r of list){
+      const miss = (r.ml||0)+(r.mc||0)+(r.mr||0);
+      const shotsArr = Array.isArray(r.liveShots) ? r.liveShots : [];
+      const preview = shotsArr.slice(0,25).map((s)=>{
+        const cls = s==="H" ? "hit" : s==="L" ? "l" : s==="C" ? "c" : s==="R" ? "r" : "pending";
+        const ch = s==="H" ? "✓" : s==="L" ? "L" : s==="C" ? "C" : s==="R" ? "R" : "·";
+        return `<span style="
+          display:inline-flex;align-items:center;justify-content:center;
+          width:22px;height:22px;border-radius:8px;border:1px solid var(--border);
+          margin:2px;font-weight:950;font-size:12px;
+          ${cls==='hit'?'background:rgba(34,197,94,.10);color:var(--green);border-color:rgba(34,197,94,.28)':''}
+          ${cls==='l'?'background:rgba(239,68,68,.10);color:var(--red);border-color:rgba(239,68,68,.25)':''}
+          ${cls==='c'?'background:rgba(249,115,22,.10);color:var(--orange);border-color:rgba(249,115,22,.25)':''}
+          ${cls==='r'?'background:rgba(234,179,8,.10);color:var(--yellow);border-color:rgba(234,179,8,.25)':''}
+        ">${ch}</span>`;
+      }).join("");
+
+      const club = (r.club||"").trim();
+      const field = (r.field||"").trim();
+      const place = [club, field].filter(Boolean).join(" • ");
+
+      const el = document.createElement("div");
+      el.className = "round";
+      el.innerHTML = `
+        <div class="roundHead">
+          <div>
+            <div style="font-weight:950">${r.date || ""} <span class="meta2">${place ? "• "+escapeHtml(place) : ""}</span></div>
+            <div class="meta2">Score: <b>${r.hit}/25</b> • Hit ${pct(r.hit,25)}% • Miss ${pct(miss,25)}%</div>
+          </div>
+          <button class="btn danger" data-del="${r.id}">Delete</button>
+        </div>
+
+        <div style="padding:10px 12px;border-bottom:1px solid var(--border)">
+          <div class="small" style="margin-bottom:6px">Pattern (✓ hit, L/C/R miss type)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0">${preview || "<span class='small'>No pattern saved.</span>"}</div>
+        </div>
+
+        <div class="mini">
+          <div class="box g"><div class="k">Hit</div><div class="v" style="color:var(--green)">${r.hit}</div></div>
+          <div class="box rr"><div class="k">Miss Left</div><div class="v" style="color:var(--red)">${r.ml}</div></div>
+          <div class="box oo"><div class="k">Miss Center</div><div class="v" style="color:var(--orange)">${r.mc}</div></div>
+          <div class="box yy"><div class="k">Miss Right</div><div class="v" style="color:var(--yellow)">${r.mr}</div></div>
+        </div>
+        <div class="notes">${r.notes ? escapeHtml(r.notes) : "<span class='meta2'>No notes.</span>"}</div>
+      `;
+      container.appendChild(el);
+    }
+
+    container.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-del");
+        rounds = rounds.filter(r=>r.id!==id);
+        save(rounds);
+        renderAll();
+      });
+    });
+  }
+
+  function renderAll(){
+    rebuildDropdowns();
+    renderLive();
+    renderOverview();
+    renderSaved();
+  }
+
+  // Overview controls
+  $("rangeSel").addEventListener("change", renderOverview);
+  $("monthSel").addEventListener("change", renderOverview);
+  $("clubSel").addEventListener("change", renderOverview);
+  $("fieldSel").addEventListener("change", renderOverview);
+
+  // Saved controls
+  $("savedRange").addEventListener("change", renderSaved);
+  $("savedDate").addEventListener("change", renderSaved);
+  $("savedClub").addEventListener("change", renderSaved);
+  $("savedField").addEventListener("change", renderSaved);
+
+  // first render
+  renderAll();
+</script>
 </body>
 </html>
