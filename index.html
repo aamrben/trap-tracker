@@ -127,6 +127,50 @@
     .pillScore.good{border-color:rgba(34,197,94,.35); color:var(--green)}
     .pillScore.mid{border-color:rgba(249,115,22,.35); color:var(--orange)}
     .pillScore.low{border-color:rgba(239,68,68,.35); color:var(--red)}
+    /* Segmented shot toggle */
+    .seg{
+      display:flex; gap:8px; padding:6px;
+      border:1px solid var(--border); border-radius:16px; background:#0f1118;
+    }
+    .segBtn{
+      flex:1; padding:10px 12px; border-radius:14px;
+      border:1px solid transparent; background:transparent; color:var(--text);
+      font-weight:950;
+    }
+    .segBtn.active{
+      background:#1b2030; border-color:#2a3150;
+    }
+    
+    /* Zone diagrams (5 lines) */
+    .zoneCard{
+      border:1px solid var(--border); border-radius:18px; padding:12px; background:#0f1118;
+    }
+    .zoneTitle{font-weight:950; font-size:13px; margin-bottom:8px; color:var(--muted)}
+    .zoneGrid{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0,1fr));
+      gap:8px;
+    }
+    .zoneBtn{
+      padding:14px 10px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:#0b0c10;
+      font-weight:950;
+      text-align:center;
+      user-select:none;
+    }
+    .zoneBtn small{display:block; font-size:10px; font-weight:900; color:var(--muted); margin-top:4px}
+    .zoneHit .zoneBtn{border-color:rgba(34,197,94,.25)}
+    .zoneHit .zoneBtn:active{transform:scale(.99); background:rgba(34,197,94,.10)}
+    .zoneMiss .zoneBtn{border-color:rgba(239,68,68,.22)}
+    .zoneMiss .zoneBtn:active{transform:scale(.99); background:rgba(239,68,68,.10)}
+    
+    /* live grid cell extra tiny info */
+    .shot .meta2{
+      font-size:10px; font-weight:900; color:var(--muted); margin-top:2px;
+    }
+
   </style>
 </head>
 <body>
@@ -159,12 +203,29 @@
 
         <div class="divider"></div>
 
-        <div class="tapGrid">
-          <button class="btn tap hit" id="tapHit">✅ HIT<small>Green</small></button>
-          <button class="btn tap left" id="tapLeft">❌ MISS LEFT<small>Red</small></button>
-          <button class="btn tap center" id="tapCenter">❌ MISS CENTER<small>Orange</small></button>
-          <button class="btn tap right" id="tapRight">❌ MISS RIGHT<small>Yellow</small></button>
+       <div class="row" style="justify-content:space-between; align-items:flex-end; gap:10px">
+        <div style="flex:1; min-width:200px">
+          <label>Shot number</label>
+          <div class="seg" role="group" aria-label="Shot number">
+            <button class="segBtn active" id="shot1Btn" type="button">1st shot</button>
+            <button class="segBtn" id="shot2Btn" type="button">2nd shot</button>
+          </div>
+          <div class="hint">Pick shot number, then tap a line in HIT or MISS diagram.</div>
         </div>
+      </div>
+      
+      <div class="zoneWrap" style="margin-top:10px">
+        <div class="zoneCard zoneHit">
+          <div class="zoneTitle">✅ HIT (green) — tap a direction</div>
+          <div class="zoneGrid" id="hitZoneGrid"></div>
+        </div>
+      
+        <div class="zoneCard zoneMiss" style="margin-top:10px">
+          <div class="zoneTitle">❌ MISS (red) — tap a direction</div>
+          <div class="zoneGrid" id="missZoneGrid"></div>
+        </div>
+      </div>
+
 
         <div class="shotsWrap">
           <div class="row" style="justify-content:space-between; margin-top:12px">
@@ -453,20 +514,73 @@
   }
   function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
 
-  // LIVE ROUND STATE (25 shots): 'H','L','C','R'
+  // LIVE ROUND STATE (25 targets): each item = { outcome:'H'|'M', zone:'HL'|'SL'|'C'|'SR'|'HR', shot:1|2 }
   let liveShots = [];
   let rounds = load();
+  
+  // current shot toggle (1 or 2)
+  let currentShot = 1;
+  
+  // zones list (fixed order)
+  const ZONES = [
+    { code:"HL", label:"Hard L", deg:"60°" },
+    { code:"SL", label:"Soft L", deg:"30°" },
+    { code:"C",  label:"Center", deg:"0°"  },
+    { code:"SR", label:"Soft R", deg:"30°" },
+    { code:"HR", label:"Hard R", deg:"60°" },
+  ];
+
 
   function countsFromShots(shots){
-    let hit=0, ml=0, mc=0, mr=0;
-    for(const s of shots){
-      if(s==="H") hit++;
-      else if(s==="L") ml++;
-      else if(s==="C") mc++;
-      else if(s==="R") mr++;
+      let hit=0;
+      // misses by 5 zones
+      let mHL=0, mSL=0, mC=0, mSR=0, mHR=0;
+    
+      // shot split
+      let s1=0, s2=0;           // attempts logged as shot 1 / shot 2
+      let h1=0, h2=0;           // hits on shot 1 / shot 2
+      let m1=0, m2=0;           // misses on shot 1 / shot 2
+    
+      for(const t of shots){
+        if(!t) continue;
+        const outcome = t.outcome; // 'H' or 'M'
+        const zone = t.zone;       // HL/SL/C/SR/HR
+        const sh = t.shot === 2 ? 2 : 1;
+    
+        if(sh === 1) s1++; else s2++;
+    
+        if(outcome === "H"){
+          hit++;
+          if(sh === 1) h1++; else h2++;
+        } else {
+          if(sh === 1) m1++; else m2++;
+    
+          if(zone === "HL") mHL++;
+          else if(zone === "SL") mSL++;
+          else if(zone === "C")  mC++;
+          else if(zone === "SR") mSR++;
+          else if(zone === "HR") mHR++;
+        }
+      }
+    
+      // keep old keys for compatibility with your UI (ml/mc/mr), but map them sensibly:
+      // ml = all LEFT misses (HL+SL), mc = center misses, mr = all RIGHT misses (SR+HR)
+      const ml = mHL + mSL;
+      const mc = mC;
+      const mr = mSR + mHR;
+    
+      return {
+        shots: 25,
+        hit,
+        // legacy buckets
+        ml, mc, mr,
+        // detailed buckets
+        mHL, mSL, mC, mSR, mHR,
+        // shot split
+        s1, s2, h1, h2, m1, m2
+      };
     }
-    return {shots: 25, hit, ml, mc, mr};
-  }
+
   function stationIndexFromShotIndex(i){
     return Math.min(4, Math.floor(i/5));
   }
@@ -486,41 +600,83 @@
     else $("statusLine").textContent = "Round complete. Save it or reset.";
 
     const done = idx >= 25;
-    $("tapHit").disabled = done;
-    $("tapLeft").disabled = done;
-    $("tapCenter").disabled = done;
-    $("tapRight").disabled = done;
+    // disable zone buttons when round is done
+    document.querySelectorAll(".zoneBtn").forEach(b=> b.disabled = done);
+    $("shot1Btn").disabled = done;
+    $("shot2Btn").disabled = done;
     $("undoBtn").disabled = (idx === 0);
 
     const grid = $("shotGrid");
     grid.innerHTML = "";
     for(let i=0;i<25;i++){
-      const s = liveShots[i];
-      const st = Math.floor(i/5) + 1;
-      const inSt = (i % 5) + 1;
-      const el = document.createElement("div");
+      const t = liveShots[i]; // {outcome, zone, shot}
+      const s = t ? t.outcome : null;
+      
       el.className = "shot " + (
+        !t ? "pending" :
         s==="H" ? "hit" :
-        s==="L" ? "l" :
-        s==="C" ? "c" :
-        s==="R" ? "r" : "pending"
+        // color misses by broad direction for quick scanning:
+        (t.zone==="HL"||t.zone==="SL") ? "l" :
+        (t.zone==="C") ? "c" :
+        "r"
       );
-      const label = s==="H" ? "HIT" : s==="L" ? "LEFT" : s==="C" ? "CENTER" : s==="R" ? "RIGHT" : "—";
-      el.innerHTML = `<div>${label}</div><div class="meta">S${st} • #${inSt}</div>`;
+      
+      const label = !t ? "—" : (t.outcome==="H" ? "HIT" : "MISS");
+      const z = !t ? "" : t.zone; // HL/SL/C/SR/HR
+      const sh = !t ? "" : (t.shot===2 ? "²" : "¹");
+      
+      el.innerHTML = `
+        <div>${label}${t ? " " + sh : ""}</div>
+        <div class="meta2">${t ? z : ""}</div>
+        <div class="meta">S${st} • #${inSt}</div>
+      `;
       grid.appendChild(el);
     }
   }
 
-  function pushShot(code){
+  function pushTarget(outcome, zone){
     if(liveShots.length >= 25) return;
-    liveShots.push(code);
+    liveShots.push({ outcome, zone, shot: currentShot });
     renderLive();
   }
+  
+  function renderZoneButtons(){
+    const hitWrap = $("hitZoneGrid");
+    const missWrap = $("missZoneGrid");
+    hitWrap.innerHTML = "";
+    missWrap.innerHTML = "";
+  
+    for(const z of ZONES){
+      // HIT button
+      const bH = document.createElement("button");
+      bH.type = "button";
+      bH.className = "zoneBtn";
+      bH.innerHTML = `${z.label}<small>${z.deg}</small>`;
+      bH.addEventListener("click", ()=>pushTarget("H", z.code));
+      hitWrap.appendChild(bH);
+  
+      // MISS button
+      const bM = document.createElement("button");
+      bM.type = "button";
+      bM.className = "zoneBtn";
+      bM.innerHTML = `${z.label}<small>${z.deg}</small>`;
+      bM.addEventListener("click", ()=>pushTarget("M", z.code));
+      missWrap.appendChild(bM);
+    }
+  }
+  
+  // shot toggle
+  $("shot1Btn").addEventListener("click", ()=>{
+    currentShot = 1;
+    $("shot1Btn").classList.add("active");
+    $("shot2Btn").classList.remove("active");
+  });
+  $("shot2Btn").addEventListener("click", ()=>{
+    currentShot = 2;
+    $("shot2Btn").classList.add("active");
+    $("shot1Btn").classList.remove("active");
+  });
 
-  $("tapHit").addEventListener("click", ()=>pushShot("H"));
-  $("tapLeft").addEventListener("click", ()=>pushShot("L"));
-  $("tapCenter").addEventListener("click", ()=>pushShot("C"));
-  $("tapRight").addEventListener("click", ()=>pushShot("R"));
 
   $("undoBtn").addEventListener("click", ()=>{
     liveShots.pop();
@@ -682,9 +838,17 @@
     }
 
     const totalHit = list.reduce((s,r)=>s+(r.hit||0),0);
-    const totalL = list.reduce((s,r)=>s+(r.ml||0),0);
-    const totalC = list.reduce((s,r)=>s+(r.mc||0),0);
-    const totalR = list.reduce((s,r)=>s+(r.mr||0),0);
+    // prefer detailed fields if present, fall back to legacy
+    const totalHL = list.reduce((s,r)=>s+(r.mHL||0),0);
+    const totalSL = list.reduce((s,r)=>s+(r.mSL||0),0);
+    const totalC  = list.reduce((s,r)=>s+(r.mC||0),0);
+    const totalSR = list.reduce((s,r)=>s+(r.mSR||0),0);
+    const totalHR = list.reduce((s,r)=>s+(r.mHR||0),0);
+    
+    // legacy buckets (for your current miss diagram)
+    const totalL = totalHL + totalSL;
+    const totalR = totalSR + totalHR;
+
 
     const avgHits = totalHit / list.length;
     const avgPct = pct(totalHit, list.length*25);
@@ -697,11 +861,16 @@
     const last10List = byRecent.slice(0,10);
     const last10Avg = last10List.length ? (last10List.reduce((s,r)=>s+(r.hit||0),0) / last10List.length) : null;
 
-    const misses = [
-      {k:"LEFT", v: totalL, cls:"left", dot:"var(--red)"},
-      {k:"CENTER", v: totalC, cls:"center", dot:"var(--orange)"},
-      {k:"RIGHT", v: totalR, cls:"right", dot:"var(--yellow)"},
+    const misses5 = [
+      {k:"Hard Left", v: totalHL, cls:"left", dot:"var(--red)"},
+      {k:"Soft Left", v: totalSL, cls:"left", dot:"var(--red)"},
+      {k:"Center",    v: totalC,  cls:"center", dot:"var(--orange)"},
+      {k:"Soft Right",v: totalSR, cls:"right", dot:"var(--yellow)"},
+      {k:"Hard Right",v: totalHR, cls:"right", dot:"var(--yellow)"},
     ].sort((a,b)=>b.v-a.v);
+    
+    const topMiss = misses5[0];
+
 
     const topMiss = misses[0];
 
@@ -739,9 +908,9 @@
     const insight = $("insightBadge");
     insight.style.display = "inline-flex";
     let text = "";
-    if(topMiss.k === "CENTER") text = "Focus: timing + trigger discipline";
-    if(topMiss.k === "LEFT") text = "Focus: line & move for LEFT targets";
-    if(topMiss.k === "RIGHT") text = "Focus: keep moving through RIGHT";
+    if(topMiss.k.includes("Left")) text = "Focus: line + move on LEFT";
+    else if(topMiss.k.includes("Right")) text = "Focus: keep moving through RIGHT";
+    else text = "Focus: timing + trigger discipline";
     insight.className = "badge";
     insight.innerHTML = `🎯 ${text}`;
 
@@ -788,12 +957,33 @@
       const miss = (r.ml||0)+(r.mc||0)+(r.mr||0);
       const shotsArr = Array.isArray(r.liveShots) ? r.liveShots : [];
       const preview = shotsArr.slice(0,25).map((s)=>{
-        const cls = s==="H" ? "hit" : s==="L" ? "l" : s==="C" ? "c" : s==="R" ? "r" : "pending";
-        const ch = s==="H" ? "✓" : s==="L" ? "L" : s==="C" ? "C" : s==="R" ? "R" : "·";
+        // Support new object format OR old string format
+        let cls = "pending";
+        let ch = "·";
+        
+        if(typeof s === "string"){
+          // old format fallback
+          cls = s==="H" ? "hit" : s==="L" ? "l" : s==="C" ? "c" : s==="R" ? "r" : "pending";
+          ch  = s==="H" ? "✓" : s==="L" ? "L" : s==="C" ? "C" : s==="R" ? "R" : "·";
+        } else if(s && typeof s === "object"){
+          const outcome = s.outcome;     // H/M
+          const zone = s.zone || "";     // HL/SL/C/SR/HR
+          const sh = s.shot === 2 ? "²" : "¹";
+        
+          if(outcome === "H"){
+            cls = "hit";
+            ch = zone + sh;
+          } else {
+            // color misses by broad side
+            cls = (zone==="HL"||zone==="SL") ? "l" : (zone==="C" ? "c" : "r");
+            ch = zone + sh;
+          }
+        }
+
         return `<span style="
           display:inline-flex;align-items:center;justify-content:center;
           width:22px;height:22px;border-radius:8px;border:1px solid var(--border);
-          margin:2px;font-weight:950;font-size:12px;
+          margin:2px;font-weight:950;font-size:10px;
           ${cls==='hit'?'background:rgba(34,197,94,.10);color:var(--green);border-color:rgba(34,197,94,.28)':''}
           ${cls==='l'?'background:rgba(239,68,68,.10);color:var(--red);border-color:rgba(239,68,68,.25)':''}
           ${cls==='c'?'background:rgba(249,115,22,.10);color:var(--orange);border-color:rgba(249,115,22,.25)':''}
@@ -813,7 +1003,11 @@
             <div style="font-weight:950">${r.date || ""} <span class="meta2">${place ? "• "+escapeHtml(place) : ""}</span></div>
             <div class="meta2">Score: <b>${r.hit}/25</b> • Hit ${pct(r.hit,25)}% • Miss ${pct(miss,25)}%</div>
           </div>
-          <button class="btn danger" data-del="${r.id}">Delete</button>
+         <div class="row" style="gap:8px">
+            <button class="btn" data-pdf="${r.id}">Export PDF</button>
+            <button class="btn danger" data-del="${r.id}">Delete</button>
+         </div>
+
         </div>
 
         <div style="padding:10px 12px;border-bottom:1px solid var(--border)">
@@ -840,14 +1034,30 @@
         renderAll();
       });
     });
+    container.querySelectorAll("[data-pdf]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-pdf");
+        const r = rounds.find(x=>x.id===id);
+        if(!r) return;
+        exportRoundPDF(r);
+      });
+    });
+
   }
+
+  let zonesRendered = false;
 
   function renderAll(){
     rebuildDropdowns();
+    if(!zonesRendered){
+      renderZoneButtons();
+      zonesRendered = true;
+    }
     renderLive();
     renderOverview();
     renderSaved();
   }
+
 
   // Overview controls
   $("rangeSel").addEventListener("change", renderOverview);
@@ -860,6 +1070,70 @@
   $("savedDate").addEventListener("change", renderSaved);
   $("savedClub").addEventListener("change", renderSaved);
   $("savedField").addEventListener("change", renderSaved);
+  function exportRoundPDF(r){
+    const shotsArr = Array.isArray(r.liveShots) ? r.liveShots : [];
+    const miss = (r.ml||0)+(r.mc||0)+(r.mr||0);
+  
+    // Build 25-cell text line
+    const cells = shotsArr.slice(0,25).map((s, i)=>{
+      if(typeof s === "string"){
+        return s==="H" ? "✓" : s; // legacy
+      }
+      if(s && typeof s === "object"){
+        const sh = s.shot === 2 ? "²" : "¹";
+        if(s.outcome === "H") return `✓${s.zone}${sh}`;
+        return `×${s.zone}${sh}`;
+      }
+      return "·";
+    });
+  
+    const club = (r.club||"").trim();
+    const field = (r.field||"").trim();
+    const place = [club, field].filter(Boolean).join(" • ");
+  
+    const html = `
+  <!doctype html>
+  <html>
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trap Tracker PDF</title>
+  <style>
+    body{font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial; padding:18px; color:#111}
+    h2{margin:0 0 6px}
+    .meta{color:#444; font-size:12px; margin-bottom:10px}
+    .grid{display:grid; grid-template-columns:repeat(25, 1fr); gap:4px; margin-top:10px}
+    .cell{border:1px solid #bbb; border-radius:6px; padding:6px 4px; text-align:center; font-weight:700; font-size:10px; min-height:26px}
+    .notes{margin-top:12px; font-size:12px; white-space:pre-wrap; border-top:1px solid #ddd; padding-top:10px}
+    .sum{margin-top:10px; font-size:12px}
+  </style>
+  </head>
+  <body>
+    <h2>${escapeHtml(r.date || "")} — ${escapeHtml(place || "—")}</h2>
+    <div class="meta">Score: <b>${r.hit}/25</b> • Hit ${pct(r.hit,25)}% • Miss ${pct(miss,25)}%</div>
+  
+    <div class="sum">
+      <b>Legend:</b> ✓HL¹ hit Hard Left 1st • ×SR² miss Soft Right 2nd
+    </div>
+  
+    <div class="grid">
+      ${cells.map(c=>`<div class="cell">${escapeHtml(c)}</div>`).join("")}
+    </div>
+  
+    <div class="notes"><b>Notes</b><br>${r.notes ? escapeHtml(r.notes) : "—"}</div>
+  
+    <script>
+      window.onload = () => window.print();
+    </script>
+  </body>
+  </html>`;
+  
+    const w = window.open("", "_blank");
+    if(!w){ alert("Popup blocked. Allow popups to export PDF."); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
 
   // first render
   renderAll();
