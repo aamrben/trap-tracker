@@ -251,10 +251,10 @@
         <div class="divider"></div>
 
         <div class="statgrid">
-          <div class="stat"><div class="k">Station</div><div class="v" id="stationV">1/5</div></div>
-          <div class="stat"><div class="k">Target</div><div class="v" id="shotV">0/25</div></div>
           <div class="stat"><div class="k">Score</div><div class="v" id="scoreV">0/25</div></div>
+          <div class="stat"><div class="k">Target</div><div class="v" id="shotV">0/25</div></div>
           <div class="stat"><div class="k">Hit %</div><div class="v" id="hitPctV">0%</div></div>
+          <div class="stat"><div class="k">Shot used</div><div class="v" id="shotUsedV">1st</div></div>
         </div>
 
         <div class="divider"></div>
@@ -395,7 +395,7 @@
         <div style="height:10px"></div>
 
         <!-- Top 3 stats -->
-        <div class="statgrid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="statgrid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
           <div class="stat">
             <div class="k">Average</div>
             <div class="v" id="avgHits">0.0/25</div>
@@ -414,6 +414,12 @@
             <div class="s" id="last10Sub">Avg hits (if ≥10)</div>
           </div>
         </div>
+        
+          <div class="stat" id="secondShotStat" style="background:rgba(234,179,8,.08); border-color:rgba(234,179,8,.28)">
+            <div class="k">2nd Shot reliance</div>
+            <div class="v" id="avgShot2">0.0/25</div>
+            <div class="s" id="avgShot2Sub">Avg per round (selected period)</div>
+          </div>
 
         <!-- Miss diagram 5-zone -->
         <div class="divider"></div>
@@ -662,7 +668,7 @@
     const station = stationIndexFromTargetIndex(Math.max(0, idx)) + 1;
     const {hit} = countsFromTargets(liveTargets);
 
-    $("stationV").textContent = `${Math.min(5, station)}/5`;
+    $("shotUsedV").textContent = shotUsed === 1 ? "1st" : "2nd";
     $("shotV").textContent = `${idx}/25`;
     $("scoreV").textContent = `${hit}/25`;
     $("hitPctV").textContent = `${pct(hit, Math.max(1, idx))}%`;
@@ -689,7 +695,7 @@
       } else {
         const labelTop = t.out === "H" ? "HIT" : "MISS";
         const labelMid = `${t.zone}`;
-        const labelBot = `Shot ${t.shot}`;
+        const labelBot = t.shot === 1 ? "1st Shot" : "2nd Shot";
         el.className = `shot ${t.out==="H" ? "hit" : "miss"}`;
         el.style.background = t.out==="H" ? "rgba(34,197,94,.08)" : "rgba(239,68,68,.08)";
         el.style.color = t.out==="H" ? "var(--g1)" : "var(--r1)";
@@ -893,6 +899,8 @@
       $("missDiagramSub").textContent = "Based on selected period";
       $("mostMissedBadge").style.display = "none";
       $("insightBadge").style.display = "none";
+      $("avgShot2").textContent = "0.0/25";
+      $("avgShot2Sub").textContent = "Avg per round (selected period)";
       return;
     }
 
@@ -935,6 +943,12 @@
       $("last10").textContent = "—";
       $("last10Sub").textContent = `Need 10 rounds (you have ${last10List.length})`;
     }
+    // Avg reliance on 2nd shot (per round)
+    const totalShot2 = list.reduce((s,r)=>s+(r.shot2||0),0);
+    const avgShot2 = totalShot2 / list.length;
+    
+    $("avgShot2").textContent = `${avgShot2.toFixed(1)}/25`;
+    $("avgShot2Sub").textContent = "Avg per round (selected period)";
 
     // Avg misses per round by zone (5)
     const avgM = {
