@@ -231,7 +231,7 @@
   <div class="wrap">
     <h1>Trap Tracker — Aamr Benbrahim</h1>
     <p class="sub">
-      One tap per target (25). Log <b>zone</b> + <b>hit/miss</b> + <b>shot used</b> (1st/2nd). Zones: HL (60°), SL (30°), C (0°), SR (30°), HR (60°).
+      
     </p>
 
     <div class="grid">
@@ -453,7 +453,7 @@
             <path d="M180 86 C150 66, 125 46, 100 18" fill="none" stroke="var(--r3)" stroke-width="6" stroke-linecap="round"/>
             <path d="M180 86 C180 60, 180 40, 180 14" fill="none" stroke="var(--orange)" stroke-width="6" stroke-linecap="round"/>
             <path d="M180 86 C210 66, 235 46, 260 18" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linecap="round"/>
-            <path d="M180 86 C230 70, 270 50, 310 18" fill="none" stroke="var(--g1)" stroke-width="6" stroke-linecap="round"/>
+            <path d="M180 86 C230 70, 270 50, 310 18" fill="none" stroke="var(--r2)" stroke-width="6" stroke-linecap="round"/>
 
             <!-- labels -->
             <text x="52" y="16" fill="var(--muted)" font-size="11" font-weight="900">HL</text>
@@ -694,7 +694,11 @@
         el.style.background = t.out==="H" ? "rgba(34,197,94,.08)" : "rgba(239,68,68,.08)";
         el.style.color = t.out==="H" ? "var(--g1)" : "var(--r1)";
         el.style.borderColor = t.out==="H" ? "rgba(34,197,94,.24)" : "rgba(239,68,68,.22)";
-        el.innerHTML = `<div style="font-size:12px">${labelTop}</div><div style="font-size:16px">${labelMid}</div><div class="meta">S${st} • #${inSt} • ${labelBot}</div>`;
+        el.innerHTML = `
+          <div style="font-size:18px;font-weight:950">${labelMid}</div>
+          <div class="meta">${labelBot}</div>
+        `;
+
       }
       grid.appendChild(el);
     }
@@ -1055,8 +1059,8 @@
         <div class="mini">
           <div class="box g"><div class="k">Hit</div><div class="v" style="color:var(--g1)">${r.hit||0}</div></div>
           <div class="box rr"><div class="k">Miss</div><div class="v" style="color:var(--r1)">${r.miss||0}</div></div>
-          <div class="box oo"><div class="k">Shot 1 used</div><div class="v" style="color:var(--orange)">${r.shot1||0}</div></div>
-          <div class="box yy"><div class="k">Shot 2 used</div><div class="v" style="color:var(--yellow)">${r.shot2||0}</div></div>
+          <div class="box oo"><div class="k">1st Shot</div><div class="v" style="color:var(--orange)">${r.shot1||0}</div></div>
+          <div class="box yy"><div class="k">2nd Shot</div><div class="v" style="color:var(--yellow)">${r.shot2||0}</div></div>
         </div>
 
         <div style="padding:12px;border-top:1px solid var(--border)">
