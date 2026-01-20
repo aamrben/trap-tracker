@@ -1112,7 +1112,7 @@
       });
     });
   }
-  function getSavedFilteredList(){
+ function getSavedFilteredList(){
   let list = rounds.slice();
 
   // Saved Range filter (today / specific day / all)
@@ -1134,123 +1134,301 @@
   return list;
 }
 
-  function exportSavedRoundsPDF(){
-    const list = getSavedFilteredList();
-  
-    const mode = $("savedRange").value;
-    const dateLabel =
-      mode === "today" ? `Today (${todayISO()})` :
-      mode === "day" ? `Day (${ $("savedDate").value || todayISO() })` :
-      "All rounds";
-  
-    const clubLabel = $("savedClub").value === "all" ? "All clubs" : $("savedClub").value;
-    const fieldLabel = $("savedField").value === "all" ? "All fields" : $("savedField").value;
-  
-    const title = `Trap Tracker — Saved Rounds Export`;
-    const subtitle = `Filters: ${dateLabel} • ${clubLabel} • ${fieldLabel} • Exported: ${new Date().toLocaleString()}`;
-  
-    // Build printable HTML
-    const rowsHtml = list.map((r, idx) => {
-      const club = (r.club||"").trim();
-      const field = (r.field||"").trim();
-      const place = [club, field].filter(Boolean).join(" • ");
-  
-      const missZone = r.missZone || {};
-      const mz = (z)=> (missZone[z]||0);
-  
-      const shot2 = r.shot2 || 0;
-      const shot2pct = Math.round((shot2/25)*100);
-  
-      // optional: compact pattern line (✓HL ×C ...)
-      const targetsArr = Array.isArray(r.liveTargets) ? r.liveTargets : [];
-      const pattern = targetsArr.slice(0,25).map(t=>{
-        if(!t) return "·";
-        return (t.out==="H" ? "✓" : "×") + (t.zone || "");
-      }).join(" ");
-  
-      const notes = (r.notes||"").trim();
-  
-      return `
-        <div class="card">
-          <div class="head">
-            <div>
-              <div class="date">${escapeHtml(r.date||"")}</div>
-              <div class="meta">${escapeHtml(place)}</div>
-            </div>
-            <div class="score">${r.hit || 0}/25</div>
-          </div>
-  
-          <div class="line">
-            Hit: <b>${r.hit||0}</b> • Miss: <b>${r.miss||0}</b> • 1st Shot: <b>${r.shot1||0}</b> • 2nd Shot: <b>${r.shot2||0}</b> (${shot2pct}%)
-          </div>
-  
-          <div class="zones">
-            <span>HL: <b>${mz("HL")}</b></span>
-            <span>SL: <b>${mz("SL")}</b></span>
-            <span>C: <b>${mz("C")}</b></span>
-            <span>SR: <b>${mz("SR")}</b></span>
-            <span>HR: <b>${mz("HR")}</b></span>
-          </div>
-  
-          <div class="pattern"><b>Pattern:</b> ${escapeHtml(pattern)}</div>
-  
-          ${notes ? `<div class="notes"><b>Notes:</b> ${escapeHtml(notes)}</div>` : ``}
-        </div>
-      `;
-    }).join("");
-  
-    const printHtml = `
-  <!doctype html>
-  <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>${escapeHtml(title)}</title>
-    <style>
-      /* Print-friendly (light) */
-      body{ font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial; margin:24px; color:#111; }
-      .title{ font-size:18px; font-weight:900; margin:0 0 6px; }
-      .sub{ color:#444; font-size:12px; margin:0 0 16px; }
-      .count{ font-size:12px; color:#333; margin:0 0 16px; }
-      .card{ border:1px solid #ddd; border-radius:12px; padding:12px; margin:0 0 12px; break-inside: avoid; }
-      .head{ display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
-      .date{ font-size:14px; font-weight:900; }
-      .meta{ font-size:12px; color:#444; margin-top:2px; }
-      .score{ font-size:16px; font-weight:900; }
-      .line{ font-size:12px; margin-top:8px; color:#222; }
-      .zones{ display:flex; flex-wrap:wrap; gap:10px; font-size:12px; margin-top:8px; color:#222; }
-      .pattern{ font-size:11px; margin-top:8px; color:#222; }
-      .notes{ font-size:11px; margin-top:8px; color:#222; }
-      @media print{
-        body{ margin:12mm; }
-        .card{ border-color:#bbb; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="title">${escapeHtml(title)}</div>
-    <div class="sub">${escapeHtml(subtitle)}</div>
-    <div class="count">${list.length} round(s)</div>
-    ${rowsHtml || `<div>No rounds match these filters.</div>`}
-    <script>
-      // auto open print dialog
-      window.onload = () => window.print();
-    <\/script>
-  </body>
-  </html>`;
-  
-    const w = window.open("", "_blank");
-    if(!w){
-      alert("Popup blocked. Please allow popups to export PDF.");
-      return;
-    }
-    w.document.open();
-    w.document.write(printHtml);
-    w.document.close();
+function exportSavedRoundsPDF(){
+  const exportList = getSavedFilteredList();
+
+  const mode = $("savedRange").value;
+  const dateLabel =
+    mode === "today" ? `Today (${todayISO()})` :
+    mode === "day" ? `Day (${ $("savedDate").value || todayISO() })` :
+    "All rounds";
+
+  const clubLabel = $("savedClub").value === "all" ? "All clubs" : $("savedClub").value;
+  const fieldLabel = $("savedField").value === "all" ? "All fields" : $("savedField").value;
+
+  const title = `Trap Tracker — Saved Rounds Export`;
+  const subtitle = `Filters: ${dateLabel} • ${clubLabel} • ${fieldLabel} • Exported: ${new Date().toLocaleString()}`;
+
+  // ---- helpers (PDF-only) ----
+  const fmt1 = (n)=> (Math.round(n*10)/10).toFixed(1);
+
+  function tier(score){
+    if(score >= 20) return "good";
+    if(score >= 18) return "mid";
+    return "low";
   }
-  
-  // Button handler
-  $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
+
+  function computeExportStats(list){
+    if(!list.length){
+      return { avgHits:0, avgPct:0, best:0, worst:0, last10Avg:null, avgShot2:0 };
+    }
+
+    const totalHit = list.reduce((s,r)=>s+(r.hit||0),0);
+    const avgHits = totalHit / list.length;
+    const avgPct = pct(totalHit, list.length*25);
+
+    const scores = list.map(r=> (r.hit||0));
+    const best = Math.max(...scores);
+    const worst = Math.min(...scores);
+
+    const byRecent = list.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const last10 = byRecent.slice(0,10);
+    const last10Avg = last10.length >= 10
+      ? (last10.reduce((s,r)=>s+(r.hit||0),0) / 10)
+      : null;
+
+    const totalShot2 = list.reduce((s,r)=>s+(r.shot2||0),0);
+    const avgShot2 = totalShot2 / list.length;
+
+    return { avgHits, avgPct, best, worst, last10Avg, avgShot2 };
+  }
+
+  function zoneChar(z){
+    if(z==="HL") return "L";
+    if(z==="SL") return "l";
+    if(z==="C")  return "0";
+    if(z==="SR") return "r";
+    if(z==="HR") return "R";
+    return "·";
+  }
+
+  // 5 groups of 5 targets, each cell shows ✓/× with direction under it
+  function patternHtml(targetsArr){
+    const arr = (Array.isArray(targetsArr) ? targetsArr : []).slice(0,25);
+
+    let html = `<div class="patRow">`;
+    for(let g=0; g<5; g++){
+      html += `<div class="patGroup">`;
+      for(let i=0; i<5; i++){
+        const t = arr[g*5 + i];
+        const isHit = !!(t && t.out === "H");
+        const sym = isHit ? "✓" : "×";
+        const dir = t ? zoneChar(t.zone) : "·";
+
+        html += `
+          <span class="patCell ${isHit ? "hit" : "miss"}">
+            <span class="sym">${sym}</span>
+            <span class="dir">${dir}</span>
+          </span>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  const stats = computeExportStats(exportList);
+
+  // One top stats block (like app) for the exported/filtered list
+  const topStatsHtml = `
+    <div class="topStats">
+      <div class="tsBox">
+        <div class="k">Average</div>
+        <div class="v">${fmt1(stats.avgHits)}/25</div>
+        <div class="s">Avg hit %: ${stats.avgPct}%</div>
+      </div>
+
+      <div class="tsBox">
+        <div class="k">Best / Worst</div>
+        <div class="v">
+          <span class="pill ${tier(stats.best)}">Best: ${stats.best}/25</span>
+          <span class="pill ${tier(stats.worst)}">Worst: ${stats.worst}/25</span>
+        </div>
+      </div>
+
+      <div class="tsBox">
+        <div class="k">Last 10 rounds</div>
+        <div class="v">${stats.last10Avg === null ? "—" : `${fmt1(stats.last10Avg)}/25`}</div>
+        <div class="s">${
+          stats.last10Avg === null
+            ? `Need 10 rounds (you have ${Math.min(10, exportList.length)})`
+            : "Average of last 10 rounds"
+        }</div>
+      </div>
+
+      <div class="tsBox yellow">
+        <div class="k">2nd Shot reliance</div>
+        <div class="v">${fmt1(stats.avgShot2)}/25</div>
+        <div class="s">Avg per round (selected period)</div>
+      </div>
+    </div>
+  `;
+
+  // Build printable HTML rows
+  const rowsHtml = exportList.map((r) => {
+    const club = (r.club||"").trim();
+    const field = (r.field||"").trim();
+    const place = [club, field].filter(Boolean).join(" • ");
+
+    const missZone = r.missZone || {};
+    const mz = (z)=> (missZone[z]||0);
+
+    const notes = (r.notes||"").trim();
+    const pat = patternHtml(r.liveTargets || []);
+
+    return `
+      <div class="card">
+        <div class="head">
+          <div>
+            <div class="date">${escapeHtml(r.date||"")}</div>
+            <div class="meta">${escapeHtml(place)}</div>
+          </div>
+          <div class="score">${r.hit || 0}/25</div>
+        </div>
+
+        <!-- remove Hit/Miss text + remove %; keep only 1st/2nd -->
+        <div class="line">
+          1st Shot: <b>${r.shot1||0}</b> • 2nd Shot: <b>${r.shot2||0}</b>
+        </div>
+
+        <div class="zones">
+          <span>HL: <b>${mz("HL")}</b></span>
+          <span>SL: <b>${mz("SL")}</b></span>
+          <span>C: <b>${mz("C")}</b></span>
+          <span>SR: <b>${mz("SR")}</b></span>
+          <span>HR: <b>${mz("HR")}</b></span>
+        </div>
+
+        <div class="pattern">
+          <b>Pattern:</b>
+          ${pat}
+        </div>
+
+        ${notes ? `<div class="notes"><b>Notes:</b> ${escapeHtml(notes)}</div>` : ``}
+      </div>
+    `;
+  }).join("");
+
+  const printHtml = `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    /* Print-friendly (light) */
+    body{ font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial; margin:24px; color:#111; }
+    .title{ font-size:18px; font-weight:900; margin:0 0 6px; }
+    .sub{ color:#444; font-size:12px; margin:0 0 10px; }
+    .count{ font-size:12px; color:#333; margin:0 0 14px; }
+
+    .topStats{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      margin:10px 0 14px;
+    }
+    .tsBox{
+      border:1px solid #d7d7d7;
+      border-radius:14px;
+      padding:10px 12px;
+      background:#fff;
+    }
+    .tsBox .k{ font-size:11px; color:#666; font-weight:800; }
+    .tsBox .v{ font-size:18px; font-weight:950; margin-top:3px; }
+    .tsBox .s{ font-size:11px; color:#666; margin-top:4px; }
+
+    .tsBox.yellow{
+      background: rgba(234,179,8,.12);
+      border-color: rgba(234,179,8,.55);
+    }
+
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid #bbb;
+      font-weight:900;
+      margin-right:6px;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .pill.good{ border-color: rgba(34,197,94,.7); }
+    .pill.mid{  border-color: rgba(249,115,22,.7); }
+    .pill.low{  border-color: rgba(239,68,68,.7); }
+
+    .card{
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:12px;
+      margin:0 0 12px;
+      break-inside: avoid;
+    }
+    .head{ display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .date{ font-size:14px; font-weight:900; }
+    .meta{ font-size:12px; color:#444; margin-top:2px; }
+    .score{ font-size:16px; font-weight:900; }
+
+    .line{ font-size:12px; margin-top:8px; color:#222; }
+    .zones{ display:flex; flex-wrap:wrap; gap:10px; font-size:12px; margin-top:8px; color:#222; }
+
+    .pattern{ font-size:11px; margin-top:10px; color:#222; }
+    .notes{ font-size:11px; margin-top:8px; color:#222; }
+
+    /* Pattern layout: 5 groups of 5, direction under ✓/×, one line */
+    .patRow{
+      display:flex;
+      gap:14px;          /* spacing between each 5-target group */
+      flex-wrap:nowrap;  /* keep in one line */
+      align-items:flex-end;
+      margin-top:6px;
+    }
+    .patGroup{
+      display:inline-flex;
+      gap:4px;           /* spacing between targets in a group */
+    }
+    .patCell{
+      width:18px;
+      display:inline-flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+      font-weight:950;
+    }
+    .patCell .sym{ font-size:13px; line-height:1; }
+    .patCell .dir{ font-size:9px; line-height:1; margin-top:1px; color:#444; }
+
+    .patCell.hit .sym{ color:#16a34a; }   /* green */
+    .patCell.miss .sym{ color:#dc2626; }  /* red */
+
+    @media print{
+      body{ margin:12mm; }
+      .card{ border-color:#bbb; }
+      /* keep colors in PDF */
+      *{ -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="title">${escapeHtml(title)}</div>
+  <div class="sub">${escapeHtml(subtitle)}</div>
+
+  ${topStatsHtml}
+
+  <div class="count">${exportList.length} round(s)</div>
+
+  ${rowsHtml || `<div>No rounds match these filters.</div>`}
+
+  <script>
+    window.onload = () => window.print();
+  <\/script>
+</body>
+</html>`;
+
+  const w = window.open("", "_blank");
+  if(!w){
+    alert("Popup blocked. Please allow popups to export PDF.");
+    return;
+  }
+  w.document.open();
+  w.document.write(printHtml);
+  w.document.close();
+}
+
+// Button handler
+$("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
 
   function renderAll(){
     rebuildDropdowns();
