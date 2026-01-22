@@ -621,13 +621,6 @@
           <div class="v" id="cartridgeTotal" style="font-size:34px;font-weight:950">0</div>
         </div>
     
-        <div class="row" style="gap:8px; justify-content:flex-end">
-          <button class="btn" id="exportProfileJsonBtn" type="button">Export JSON</button>
-          <button class="btn" id="importProfileJsonBtn" type="button">Import JSON</button>
-          <input id="importProfileFile" type="file" accept="application/json" style="display:none" />
-          <button class="btn" id="addProfileBtn" type="button">+ Add</button>
-          <button class="btn danger" id="removeProfileBtn" type="button">− Remove</button>
-        </div>
       </div>
     
     
@@ -710,6 +703,15 @@
 
     <div class="small" style="margin-bottom:8px">Active profile</div>
     <div id="profilesList" class="profilesList"></div>
+
+    <div class="divider"></div>
+
+    <div class="row" style="gap:8px; justify-content:flex-end; flex-wrap:wrap">
+      <button class="btn" id="exportProfileJsonBtn" type="button">Export JSON</button>
+      <button class="btn" id="importProfileJsonBtn" type="button">Import JSON</button>
+      <input id="importProfileFile" type="file" accept="application/json" style="display:none" />
+    </div>
+
 
     <div class="divider"></div>
 
@@ -821,10 +823,7 @@
   $("date").value = todayISO();
   $("savedDate").value = todayISO();
 
-  function uid(){
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
-  }
-
+ 
   function escapeHtml(s){
     return String(s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"\"":'&quot;',"'":'&#39;'}[c]));
   }
@@ -2049,7 +2048,7 @@ $("cartridgeMinus").addEventListener("click", ()=>{
     renderProfilesUI();
   });
 
-  // ===== Export/Import Profiles as JSON file (unlimited size) =====
+  // ===== Export/Import Profiles as JSON file (unlimited size) + Merge option =====
 
   function downloadTextFile(filename, text){
     const blob = new Blob([text], { type: "application/json" });
@@ -2067,19 +2066,45 @@ $("cartridgeMinus").addEventListener("click", ()=>{
     try { return JSON.parse(text); } catch { return null; }
   }
   
+  function cartKeyFor(pid){
+    return makeKey(pid) + "_cartridge_manual";
+  }
+  
+  function dedupeRoundsById(list){
+    const seen = new Set();
+    const out = [];
+    for(const r of list){
+      const id = r && r.id ? String(r.id) : null;
+      if(id){
+        if(seen.has(id)) continue;
+        seen.add(id);
+      }
+      out.push(r);
+    }
+    return out;
+  }
+  
+  function normalizeName(s){
+    return String(s || "").trim().toLowerCase();
+  }
+  
   function buildProfilesExportPayload(mode){
-    // mode: "active" | "all"
-    const exportProfiles = (mode === "all") ? profiles : [activeProfile()];
+    const profs = loadProfiles();
+    const activeId = getActiveProfileId();
+    const exportProfiles = (mode === "all")
+      ? profs
+      : profs.filter(p => p.id === activeId);
+  
     return {
       v: 1,
       exportedAt: Date.now(),
       app: "Trap Tracker",
       profiles: exportProfiles.map(p => {
         const pid = p.id;
-        const roundsRaw = localStorage.getItem(roundsKey(pid));
-        const cartRaw   = localStorage.getItem(cartKey(pid));
+        const roundsRaw = localStorage.getItem(makeKey(pid));
+        const cartRaw   = localStorage.getItem(cartKeyFor(pid));
         return {
-          id: p.id,
+          id: pid,
           name: p.name,
           rounds: roundsRaw ? (safeParseJSON(roundsRaw) || []) : [],
           cartManual: cartRaw ? Number(cartRaw) : 0
@@ -2088,61 +2113,120 @@ $("cartridgeMinus").addEventListener("click", ()=>{
     };
   }
   
+  // returns "merge" | "copy" | "skip"
+  function askImportAction(profileName){
+    const msg =
+  `Profile "${profileName}" already exists.
+  
+  Type:
+    m  = merge into existing
+    c  = create a copy
+    s  = skip this one`;
+  
+    const ans = (prompt(msg, "m") || "").trim().toLowerCase();
+    if(ans === "m" || ans === "merge") return "merge";
+    if(ans === "c" || ans === "copy")  return "copy";
+    if(ans === "s" || ans === "skip")  return "skip";
+    // default if user cancels/invalid:
+    return "merge";
+  }
+  
   function importProfilesPayload(payload){
     if(!payload || payload.v !== 1 || !Array.isArray(payload.profiles)){
       alert("Invalid JSON file (missing profiles).");
       return;
     }
   
-    const existingIds = new Set(profiles.map(p => p.id));
+    const profs = loadProfiles();
+    const byId = new Map(profs.map(p => [p.id, p]));
+    const byName = new Map(profs.map(p => [normalizeName(p.name), p]));
   
     let importedCount = 0;
+    let mergedCount = 0;
+    let skippedCount = 0;
+    let lastTouchedId = null;
   
-    for(const p of payload.profiles){
-      if(!p || !p.name) continue;
+    for(const inc of payload.profiles){
+      if(!inc || !inc.name) continue;
   
-      // Avoid overwriting: if ID exists, generate a new one
-      let newId = (p.id && !existingIds.has(p.id))
-        ? p.id
-        : `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+      const incomingName = String(inc.name).trim() || "Imported";
+      const incomingNameKey = normalizeName(incomingName);
   
-      existingIds.add(newId);
+      const incomingRounds = Array.isArray(inc.rounds) ? inc.rounds : [];
+      const incomingCart = Number(inc.cartManual || 0);
+      const incomingCartSafe = Number.isFinite(incomingCart) ? Math.max(0, Math.floor(incomingCart)) : 0;
   
-      const newProfile = { id: newId, name: String(p.name).trim() || "Imported" };
-      profiles.push(newProfile);
+      // If same name exists -> ask merge/copy/skip
+      const existingByName = byName.get(incomingNameKey);
   
-      // Save rounds
-      const roundsList = Array.isArray(p.rounds) ? p.rounds : [];
-      localStorage.setItem(roundsKey(newId), JSON.stringify(roundsList));
+      if(existingByName){
+        const action = askImportAction(incomingName);
+        if(action === "skip"){
+          skippedCount++;
+          continue;
+        }
   
-      // Save cartridge manual
-      const cartManual = Number(p.cartManual || 0);
-      localStorage.setItem(
-        cartKey(newId),
-        String(Number.isFinite(cartManual) ? Math.max(0, Math.floor(cartManual)) : 0)
-      );
+        if(action === "merge"){
+          const targetId = existingByName.id;
+  
+          // merge rounds
+          const existingRoundsRaw = localStorage.getItem(makeKey(targetId));
+          const existingRounds = existingRoundsRaw ? (safeParseJSON(existingRoundsRaw) || []) : [];
+  
+          const merged = dedupeRoundsById([ ...incomingRounds, ...existingRounds ]);
+          localStorage.setItem(makeKey(targetId), JSON.stringify(merged));
+  
+          // merge cartridges (add)
+          const existingCartRaw = localStorage.getItem(cartKeyFor(targetId));
+          const existingCart = existingCartRaw ? Number(existingCartRaw) : 0;
+          const existingCartSafe = Number.isFinite(existingCart) ? Math.max(0, Math.floor(existingCart)) : 0;
+  
+          localStorage.setItem(cartKeyFor(targetId), String(existingCartSafe + incomingCartSafe));
+  
+          mergedCount++;
+          lastTouchedId = targetId;
+          continue;
+        }
+  
+        // else "copy" falls through to create a new profile
+      }
+  
+      // Create new profile (copy or no conflict)
+      let newId = (inc.id && !byId.has(inc.id)) ? inc.id : uid();
+      while(byId.has(newId)) newId = uid();
+  
+      const newProfile = { id: newId, name: incomingName };
+      profs.unshift(newProfile);
+      byId.set(newId, newProfile);
+  
+      // keep name map updated (for later imports in same file)
+      if(!byName.has(incomingNameKey)) byName.set(incomingNameKey, newProfile);
+  
+      localStorage.setItem(makeKey(newId), JSON.stringify(incomingRounds));
+      localStorage.setItem(cartKeyFor(newId), String(incomingCartSafe));
   
       importedCount++;
+      lastTouchedId = newId;
     }
   
-    if(importedCount === 0){
-      alert("No profiles found in this file.");
+    if(importedCount === 0 && mergedCount === 0){
+      alert("No usable profiles found in this file.");
       return;
     }
   
-    saveProfiles(profiles);
+    saveProfiles(profs);
   
-    // Switch to last imported profile
-    activeProfileId = profiles[profiles.length - 1].id;
-    setActiveProfileId(activeProfileId);
+    // Switch to the last touched profile
+    if(lastTouchedId){
+      applyProfile(lastTouchedId);
+    } else {
+      applyProfile(getActiveProfileId());
+    }
   
-    rounds = loadRoundsForActive();
-    liveTargets = [];
-    updateActiveProfileLine();
+    renderProfilesUI();
     renderAll();
-    openProfiles();
   
-    alert(`Imported ${importedCount} profile(s). ✅`);
+    alert(`Done ✅\nImported: ${importedCount}\nMerged: ${mergedCount}\nSkipped: ${skippedCount}`);
   }
   
   // Export JSON
@@ -2153,20 +2237,23 @@ $("cartridgeMinus").addEventListener("click", ()=>{
   
     const payload = buildProfilesExportPayload(mode);
     const ymd = new Date().toISOString().slice(0,10);
+  
+    const active = loadProfiles().find(p => p.id === getActiveProfileId());
+    const activeName = active ? active.name : "active";
+  
     const filename = mode === "all"
       ? `trap-tracker-profiles-${ymd}.json`
-      : `trap-tracker-profile-${(activeProfile().name||"active").replace(/\s+/g,"-").toLowerCase()}-${ymd}.json`;
+      : `trap-tracker-profile-${String(activeName).replace(/\s+/g,"-").toLowerCase()}-${ymd}.json`;
   
     downloadTextFile(filename, JSON.stringify(payload, null, 2));
   });
   
-  // Import JSON (open file picker)
+  // Import JSON
   $("importProfileJsonBtn").addEventListener("click", ()=>{
     $("importProfileFile").value = "";
     $("importProfileFile").click();
   });
   
-  // Handle file selection
   $("importProfileFile").addEventListener("change", async (e)=>{
     const file = e.target.files && e.target.files[0];
     if(!file) return;
@@ -2179,10 +2266,11 @@ $("cartridgeMinus").addEventListener("click", ()=>{
         return;
       }
       importProfilesPayload(payload);
-    }catch(err){
+    }catch{
       alert("Could not read that file.");
     }
   });
+
 
   // First render with active profile
   const initialProfileId = getActiveProfileId();
