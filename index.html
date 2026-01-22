@@ -975,8 +975,8 @@
   
     // y maps score 10..25 to bottom..top
     const yAtScore = (score)=>{
-      const s = Math.max(10, Math.min(25, score||10));
-      return bottom - ((s - 10) / 15) * plotH; // 15 = (25-10)
+      const s = Math.max(15, Math.min(25, score||15));
+      return bottom - ((s - 15) / 10) * plotH; // 10 = (25-15)
     };
   
     const coords = pts.map((r,i)=>({
@@ -986,12 +986,12 @@
       d: (r.date||"")
     }));
     
-    // Gridlines every 1 point from 10 to 25
+    // Gridlines every 1 point from 15 to 25
     let gridHtml = "";
-    for(let s=10; s<=25; s++){
+    for(let s=15; s<=25; s++){
       const y = yAtScore(s);
     
-      // Make 5-point lines a bit stronger (10,15,20,25)
+      // Make 5-point lines a bit stronger (15,20,25)
       const strong = (s % 5 === 0);
       const op = strong ? 0.55 : 0.18;
       const w  = strong ? 1.2 : 0.8;
@@ -999,10 +999,10 @@
       gridHtml += `<path d="M${left} ${y} H${right}" fill="none" stroke="var(--border)" stroke-width="${w}" opacity="${op}"/>`;
     }
     gridEl.innerHTML = gridHtml;
-    
-    // Y-axis labels only at 10/15/20/25
-    yLabEl.innerHTML = [10,15,20,25].map(s=>{
-      const y = yAtScore(s) + 3; // slight vertical align tweak
+   
+    // Y-axis labels only at 15/20/25
+    yLabEl.innerHTML = [15,20,25].map(s=>{
+      const y = yAtScore(s) + 3;
       return `<text x="6" y="${y}" fill="var(--muted)" font-size="10" font-weight="900">${s}</text>`;
     }).join("");
 
@@ -1361,7 +1361,7 @@ function exportSavedRoundsPDF(){
   const clubLabel = $("savedClub").value === "all" ? "All clubs" : $("savedClub").value;
   const fieldLabel = $("savedField").value === "all" ? "All fields" : $("savedField").value;
 
-  const title = `Trap Tracker — Saved Rounds Export`;
+  const title = `Olympic Trap Tracker — Saved Rounds Export`;
   const subtitle = `Filters: ${dateLabel} • ${clubLabel} • ${fieldLabel} • Exported: ${new Date().toLocaleString()}`;
 
   // ---- helpers (PDF-only) ----
@@ -1414,7 +1414,7 @@ function exportSavedRoundsPDF(){
   function zoneChar(z){
     if(z==="HL") return "L";
     if(z==="SL") return "l";
-    if(z==="C")  return "0";
+    if(z==="C")  return "c";
     if(z==="SR") return "r";
     if(z==="HR") return "R";
     return "·";
