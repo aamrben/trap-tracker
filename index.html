@@ -1393,41 +1393,38 @@ function exportSavedRoundsPDF(){
 
   function computeExportStats(list){
     if(!list.length){
-      return { avgHits:0, avgPct:0, best:0, worst:0, last10Avg:null, avgShot2:0 };
+      return { avgHits:0, avgPct:0, best:0, worst:0, avgShot2:0, avgDirL:0, avgDirC:0, avgDirR:0 };
     }
-
+  
     const totalHit = list.reduce((s,r)=>s+(r.hit||0),0);
     const avgHits = totalHit / list.length;
     const avgPct = pct(totalHit, list.length*25);
-
+  
     const scores = list.map(r=> (r.hit||0));
     const best = Math.max(...scores);
     const worst = Math.min(...scores);
-
-    // Last 10 rounds should ignore export filters: use ALL rounds, most recent by ROUND DATE
-    const allByRecent = rounds.slice().sort((a,b)=>{
-      const da = parseISODate(a.date); const db = parseISODate(b.date);
-      const ta = da ? da.getTime() : 0;
-      const tb = db ? db.getTime() : 0;
-    
-      // newest round date first
-      if(tb !== ta) return tb - ta;
-    
-      // tie-breaker: newest saved first
-      return (b.createdAt||0) - (a.createdAt||0);
-    });
-    
-    const last10 = allByRecent.slice(0,10);
-    const last10Avg = last10.length >= 10
-      ? (last10.reduce((s,r)=>s+(r.hit||0),0) / 10)
-      : null;
-
-
+  
     const totalShot2 = list.reduce((s,r)=>s+(r.shot2||0),0);
     const avgShot2 = totalShot2 / list.length;
-
-    return { avgHits, avgPct, best, worst, last10Avg, avgShot2 };
+  
+    // Miss direction totals from missZone
+    const missTotals = {HL:0, SL:0, C:0, SR:0, HR:0};
+    for(const r of list){
+      const mz = r.missZone || {};
+      missTotals.HL += (mz.HL || 0);
+      missTotals.SL += (mz.SL || 0);
+      missTotals.C  += (mz.C  || 0);
+      missTotals.SR += (mz.SR || 0);
+      missTotals.HR += (mz.HR || 0);
+    }
+  
+    const avgDirL = (missTotals.HL + missTotals.SL) / list.length;
+    const avgDirC = (missTotals.C) / list.length;
+    const avgDirR = (missTotals.SR + missTotals.HR) / list.length;
+  
+    return { avgHits, avgPct, best, worst, avgShot2, avgDirL, avgDirC, avgDirR };
   }
+
 
   function zoneChar(z){
     if(z==="HL") return "L";
@@ -1483,16 +1480,13 @@ function exportSavedRoundsPDF(){
       </div>
 
       <div class="tsBox">
-        <div class="k">Last 10 rounds</div>
-        <div class="v">${stats.last10Avg === null ? "—" : `${fmt1(stats.last10Avg)}/25`}</div>
-        <div class="s">${
-          stats.last10Avg === null
-            ? `Need 10 rounds (you have ${Math.min(10, exportList.length)})`
-            : "Average of last 10 rounds"
-        }</div>
+        <div class="k">Avg misses (direction)</div>
+        <div class="v">${fmt1(stats.avgDirL)} / ${fmt1(stats.avgDirC)} / ${fmt1(stats.avgDirR)}</div>
+        <div class="s">Left / Center / Right (per round)</div>
       </div>
 
-      <div class="tsBox yellow">
+
+      <div class="tsBox">
         <div class="k">2nd Shot reliance</div>
         <div class="v">${fmt1(stats.avgShot2)}/25</div>
         <div class="s">Avg per round (selected period)</div>
@@ -1622,7 +1616,7 @@ function exportSavedRoundsPDF(){
     }
     .patGroup{
       display:inline-flex;
-      gap:4px;           /* spacing between targets in a group */
+      gap:0px;           /* spacing between targets in a group */
     }
     .patCell{
       width:18px;
