@@ -1472,12 +1472,12 @@ function exportSavedRoundsPDF(){
       </div>
 
       <div class="tsBox">
-        <div class="k">Best / Worst</div>
         <div class="v">
-          <span class="pill ${tier(stats.best)}">Best: ${stats.best}/25</span>
-          <span class="pill ${tier(stats.worst)}">Worst: ${stats.worst}/25</span>
+          Best: ${stats.best}/25<br>
+          Worst: ${stats.worst}/25
         </div>
       </div>
+
 
       <div class="tsBox">
         <div class="k">Avg misses</div>
@@ -1489,7 +1489,7 @@ function exportSavedRoundsPDF(){
       <div class="tsBox">
         <div class="k">2nd Shot reliance</div>
         <div class="v">${fmt1(stats.avgShot2)}/25</div>
-        <div class="s">Avg per round (selected period)</div>
+        <div class="s">Avg per round</div>
       </div>
     </div>
   `;
