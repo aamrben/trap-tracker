@@ -1026,12 +1026,30 @@
   
     pathEl.setAttribute("d", d);
   
-    // Dots
-    dotsEl.innerHTML = coords.map(p=>`
-      <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--g1)">
-        <title>${p.d}: ${p.v}/25</title>
-      </circle>
-    `).join("");
+    // Dots (red <15, orange 15–19, green ≥20)
+    dotsEl.innerHTML = coords.map(p=>{
+      let color;
+    
+      if(p.v < 15){
+        color = "var(--r1)";        // red
+      } else if(p.v <= 19){
+        color = "var(--orange)";   // orange
+      } else {
+        color = "var(--g1)";       // green
+      }
+    
+      return `
+        <circle
+          cx="${p.x}"
+          cy="${p.y}"
+          r="3.5"
+          fill="${color}"
+        >
+          <title>${p.d}: ${p.v}/25</title>
+        </circle>
+      `;
+    }).join("");
+
   
     // Subtitle
     const first = coords[0], last = coords[coords.length-1];
