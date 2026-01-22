@@ -767,7 +767,6 @@
 
   function renderLive(){
     const idx = liveTargets.length;
-    const station = stationIndexFromTargetIndex(Math.max(0, idx)) + 1;
     const {hit, shot2} = countsFromTargets(liveTargets);
   
     $("shotV").textContent = `${idx}/25`;
@@ -1137,7 +1136,6 @@
     let list = rounds.slice();
     list = filterByMeta(list, $("clubSel").value, $("fieldSel").value);
     list = filterByRange(list);
-    renderCartridgesSection(list);
 
     $("rangeCount").textContent = `${list.length} rounds`;
 
@@ -1162,7 +1160,6 @@
       $("avgDirR").textContent = "0.0";
       
       renderScoreTrend([]);
-      renderCartridgesSection([]);
       return;
     }
 
@@ -1750,13 +1747,13 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
 $("cartridgePlus").addEventListener("click", ()=>{
   const step = Math.max(1, Math.floor(Number($("cartridgeStep").value || 1)));
   saveCartridgeManual(loadCartridgeManual() + step);
-  renderOverview();
+  renderCartridgesSection();
 });
 
 $("cartridgeMinus").addEventListener("click", ()=>{
   const step = Math.max(1, Math.floor(Number($("cartridgeStep").value || 1)));
   saveCartridgeManual(Math.max(0, loadCartridgeManual() - step));
-  renderOverview();
+  renderCartridgesSection();
 });
 
 
