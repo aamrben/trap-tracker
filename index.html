@@ -521,6 +521,37 @@
             <g id="scoreTrendDots"></g>
           </svg>
         </div>
+        <div class="divider"></div>
+        
+        <div class="stat" id="cartridgeStat" style="background:#0f1118">
+          <div class="k">Cartridges burned 🔥</div>
+        
+          <div class="row" style="justify-content:space-between; align-items:flex-end; gap:10px; margin-top:6px">
+            <div>
+              <div class="v" id="cartridgeTotal" style="font-size:28px;font-weight:950">0</div>
+              <div class="s" id="cartridgeSub">Based on selected period + manual adjustments</div>
+            </div>
+        
+            <div class="row" style="gap:8px; align-items:center">
+              <input id="cartridgeStep" type="number" min="1" value="25" style="width:90px" />
+              <button class="btn" id="cartridgeMinus" type="button">− Remove</button>
+              <button class="btn primary" id="cartridgePlus" type="button">+ Add</button>
+              <button class="btn danger" id="cartridgeReset" type="button">Reset</button>
+            </div>
+          </div>
+        
+          <div class="divider"></div>
+        
+          <div class="row" style="gap:10px; flex-wrap:wrap">
+            <span class="badge">Auto: <strong id="cartridgeAuto">0</strong></span>
+            <span class="badge">Manual: <strong id="cartridgeManual">0</strong></span>
+            <span class="badge">Rounds: <strong id="cartridgeRounds">0</strong></span>
+          </div>
+        
+          <div class="hint" style="margin-top:8px">
+            1st shot = 1 cartridge • 2nd shot (hit or miss) = 2 cartridges
+          </div>
+        </div>
 
 
         <div class="divider"></div>
@@ -596,6 +627,17 @@
 <script>
   const KEY = "trap_tracker_live_issf_v4_zones_aamr";
   const $ = (id) => document.getElementById(id);
+  const CART_KEY = KEY + "_cartridge_manual";
+
+  function loadCartridgeManual(){
+    const raw = localStorage.getItem(CART_KEY);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  function saveCartridgeManual(n){
+    localStorage.setItem(CART_KEY, String(Math.max(0, Math.floor(n))));
+  }
+
 
   const pct = (a,b)=> b? Math.round((a/b)*1000)/10 : 0;
 
@@ -920,6 +962,30 @@
     });
   }
 
+  function cartridgesFromRounds(list){
+    // rule: 1st-shot hit = 1, 2nd-shot hit OR miss = 2
+    return list.reduce((sum, r)=>{
+      const s1 = Number(r.shot1 || 0);
+      const s2 = Number(r.shot2 || 0);
+      return sum + s1 + (2 * s2);
+    }, 0);
+  }
+  
+  function renderCartridgesSection(filteredList){
+    const auto = cartridgesFromRounds(filteredList);
+    const manual = loadCartridgeManual();
+    const total = auto + manual;
+  
+    $("cartridgeAuto").textContent = auto;
+    $("cartridgeManual").textContent = manual;
+    $("cartridgeTotal").textContent = total;
+    $("cartridgeRounds").textContent = filteredList.length;
+  
+    $("cartridgeSub").textContent =
+      `Selected period: ${auto} • Manual: ${manual}`;
+  }
+
+
   function tier(score){
     if(score >= 20) return "good";
     if(score >= 18) return "mid";
@@ -1075,6 +1141,7 @@
     let list = rounds.slice();
     list = filterByMeta(list, $("clubSel").value, $("fieldSel").value);
     list = filterByRange(list);
+    renderCartridgesSection(list);
 
     $("rangeCount").textContent = `${list.length} rounds`;
 
@@ -1099,6 +1166,7 @@
       $("avgDirR").textContent = "0.0";
       
       renderScoreTrend([]);
+      renderCartridgesSection([]);
       return;
     }
 
@@ -1682,6 +1750,24 @@ function exportSavedRoundsPDF(){
 
 // Button handler
 $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
+
+$("cartridgePlus").addEventListener("click", ()=>{
+  const step = Math.max(1, Math.floor(Number($("cartridgeStep").value || 1)));
+  saveCartridgeManual(loadCartridgeManual() + step);
+  renderOverview();
+});
+
+$("cartridgeMinus").addEventListener("click", ()=>{
+  const step = Math.max(1, Math.floor(Number($("cartridgeStep").value || 1)));
+  saveCartridgeManual(Math.max(0, loadCartridgeManual() - step));
+  renderOverview();
+});
+
+$("cartridgeReset").addEventListener("click", ()=>{
+  saveCartridgeManual(0);
+  renderOverview();
+});
+
 
   function renderAll(){
     rebuildDropdowns();
