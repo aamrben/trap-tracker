@@ -390,9 +390,29 @@
       gap: 10px;
     }
 
+    /* 4-column filters layout (Saved Rounds + Overview) */
+    .filters{
+      display:grid;
+      gap:10px;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      align-items:end;
+    }
+    .filters > div{min-width:0;}
     
+    /* Tablet */
+    @media (max-width: 900px){
+      .filters{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    }
+    
+    /* Phone */
+    @media (max-width: 520px){
+      .filters{ grid-template-columns:1fr; }
+    }
 
-  
+    .cartridgeSection{
+      margin:14px 0;   /* separation without divider lines */
+    }
+
 
 
   </style>
@@ -537,29 +557,46 @@
 
         <div class="divider"></div>
 
-        <div class="filters" style="display:grid;gap:10px">
-          <div>
-            <label>Time range</label>
-            <select id="rangeSel">
-              <option value="today">Today</option>
-              <option value="week">This week</option>
-              <option value="month" selected>This month</option>
-              <option value="last3">Last 3 months</option>
-              <option value="last6">Last 6 months</option>
-              <option value="year">This year</option>
-              <option value="all">All time</option>
-              <option value="monthPick">Past month…</option>
-            </select>
-            <div class="hint">Pick “Past month…” to choose any month.</div>
-          </div>
-
-          <div>
-            <label>Past months</label>
-            <select id="monthSel" disabled>
-              <option value="">Select month…</option>
-            </select>
-            <div class="hint">Only active when “Past month…” is selected.</div>
-          </div>
+       <div class="filters filters--overview">
+        <div>
+          <label>Time range</label>
+          <select id="rangeSel">
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month" selected>This month</option>
+            <option value="last3">Last 3 months</option>
+            <option value="last6">Last 6 months</option>
+            <option value="year">This year</option>
+            <option value="all">All time</option>
+            <option value="monthPick">Past month…</option>
+          </select>
+        </div>
+      
+        <div>
+          <label>Past months</label>
+          <select id="monthSel" disabled>
+            <option value="">Select month…</option>
+          </select>
+        </div>
+      
+        <div>
+          <label>Club (optional)</label>
+          <select id="clubSel">
+            <option value="all">All clubs</option>
+          </select>
+        </div>
+      
+        <div>
+          <label>Field (optional)</label>
+          <select id="fieldSel">
+            <option value="all">All fields</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="hint" style="margin-top:8px">
+        Pick “Past month…” to choose any month. Past months is only active when “Past month…” is selected.
+      </div>
 
           <div>
             <label>Club (optional)</label>
@@ -719,36 +756,24 @@
       </div>
     </div>
 
-    <div class="divider"></div>
-   
     <!-- CARTRIDGES (ALL-TIME) -->
-    <div class="stat" style="margin-top:12px background:rgba(40,142,254,.08); border-color:rgba(0,208,255,.25)">
-      <div style="font-weight:950;font-size:16px">Cartridges burned 🔥</div>
+    <div class="cartridgeSection">
+      <div class="stat" style="background:rgba(0,208,255,.06); border-color:rgba(0,208,255,.22)">
+        <div style="font-weight:950;font-size:16px">Cartridges burned 🔥</div>
     
-      <div class="row" style="justify-content:space-between; align-items:center; gap:12px; margin-top:10px">
-        <!-- TOTAL -->
-        <div>
-          <div class="v" id="cartridgeTotal" style="font-size:34px;font-weight:950">0</div>
-        </div>
+        <div class="row" style="justify-content:space-between; align-items:center; gap:12px; margin-top:10px">
+          <div>
+            <div class="v" id="cartridgeTotal" style="font-size:34px;font-weight:950">0</div>
+          </div>
     
-        <!-- CONTROLS -->
-        <div class="row" style="gap:8px; align-items:center">
-          <input
-            id="cartridgeStep"
-            type="number"
-            min="1"
-            value="25"
-            style="width:90px"
-          />
-    
-          <button class="btn" id="cartridgeMinus" type="button">− Remove</button>
-          <button class="btn" id="cartridgePlus" type="button">+ Add</button>
+          <div class="row" style="gap:8px; align-items:center">
+            <input id="cartridgeStep" type="number" min="1" value="25" style="width:90px" />
+            <button class="btn" id="cartridgeMinus" type="button">− Remove</button>
+            <button class="btn" id="cartridgePlus" type="button">+ Add</button>
+          </div>
         </div>
       </div>
     </div>
-
-
-    <div class="divider"></div>
 
     <!-- SAVED ROUNDS -->
     <div class="card" style="margin-top:12px background:#111214">
