@@ -413,6 +413,10 @@
       margin:14px 0;   /* separation without divider lines */
     }
 
+    .profileActions .btn{
+      padding:8px 10px;
+      min-width:auto;
+    }
 
 
   </style>
@@ -2195,15 +2199,21 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
       const renameBtn = document.createElement("button");
       renameBtn.className = "btn";
       renameBtn.type = "button";
-      renameBtn.textContent = "Rename";
+      renameBtn.innerHTML = "✏️";
+      renameBtn.title = "Rename profile";
+      
       renameBtn.addEventListener("click", ()=>{
         const newName = prompt("Edit profile name:", p.name);
-        if(newName === null) return; // user cancelled
+        if(newName === null) return; // cancelled
+      
         const clean = newName.trim();
         if(!clean) return;
       
-        // prevent duplicates (optional but recommended)
-        const exists = profiles.some(x => x.id !== p.id && (x.name||"").trim().toLowerCase() === clean.toLowerCase());
+        // prevent duplicate names
+        const exists = profiles.some(x =>
+          x.id !== p.id &&
+          (x.name || "").trim().toLowerCase() === clean.toLowerCase()
+        );
         if(exists){
           alert("A profile with this name already exists.");
           return;
@@ -2212,14 +2222,15 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
         p.name = clean;
         saveProfiles(profiles);
       
-        // if renamed active profile, update header line immediately
+        // update header instantly if active
         if(p.id === activeId){
           $("activeProfileLine").textContent = `Profile: ${p.name}`;
-          activeProfile = p; // keep in sync
+          activeProfile = p;
         }
       
         renderProfilesUI();
       });
+
       
       actions.appendChild(switchBtn);
       actions.appendChild(renameBtn);
