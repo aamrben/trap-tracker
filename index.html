@@ -418,6 +418,148 @@
       min-width:auto;
     }
 
+    /* =========================
+   PAGES (Main / Competition)
+   ========================= */
+    .page{display:block;}
+    .page.hidden{display:none;}
+    
+    .pageTopbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    
+    .bigNavBtn{
+      width:100%;
+      padding:14px 14px;
+      border-radius:18px;
+      font-size:15px;
+      font-weight:950;
+      justify-content:center;
+    }
+    
+    .compCard{
+      border:1px solid var(--border);
+      background:#0f1118;
+      border-radius:18px;
+      padding:12px;
+    }
+    
+    .compHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    
+    .compTitle{
+      font-weight:950;
+      font-size:15px;
+    }
+    
+    .compMeta{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    
+    .compRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:10px;
+    }
+    
+    .compBadges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    
+    .compTiny{
+      font-size:12px;
+      color:var(--muted);
+    }
+    
+    .compRoundsLine{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--text);
+      opacity:.92;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    
+    .compFormGrid{
+      display:grid;
+      gap:10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items:end;
+    }
+    @media (max-width: 900px){
+      .compFormGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px){
+      .compFormGrid{ grid-template-columns: 1fr; }
+    }
+    
+    .roundInputs{
+      display:grid;
+      gap:10px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    @media (max-width: 900px){
+      .roundInputs{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px){
+      .roundInputs{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    
+    .roundInputs .ri label{
+      margin-bottom:6px;
+    }
+    
+    .roundInputs input[type="number"]{
+      text-align:center;
+      font-weight:950;
+    }
+    
+    .themePill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--border);
+      background:#0f1118;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      font-weight:950;
+      cursor:pointer;
+      user-select:none;
+    }
+    
+    .themeDot{
+      width:10px;height:10px;border-radius:999px;
+      background:rgba(255,255,255,.35);
+    }
+    
+    .compThemeBlue .compAccent{
+      border-color:rgba(0,208,255,.25) !important;
+      background:rgba(0,208,255,.06) !important;
+    }
+    .compThemeRed .compAccent{
+      border-color:rgba(239,68,68,.28) !important;
+      background:rgba(239,68,68,.08) !important;
+    }
+
+
 
   </style>
 </head>
