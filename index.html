@@ -576,6 +576,8 @@
   </div>
 
   <div class="wrap">
+  <!-- PAGES -->
+  <div id="pageMain" class="page">
     <div class="topbar">
       <div>
         <h1>Olympic Trap Performance</h1>
@@ -909,6 +911,13 @@
       </div>
     </div>
 
+    <div style="height:10px"></div>
+    <button class="btn primary bigNavBtn" id="openCompBtn" type="button">
+      🏁 Competition Mode
+    </button>
+    <div class="hint" style="margin-top:8px">Log competitions (scores only) • Stored separately from Saved Rounds</div>
+
+
     <!-- SAVED ROUNDS -->
     <div class="card" style="margin-top:12px; background:#111214">
       <div class="row" style="justify-content:space-between">
@@ -975,6 +984,134 @@
     </p>
   </div>
 
+  </div><!-- /#pageMain -->
+
+  <!-- ======================
+       COMPETITION MODE PAGE
+       ====================== -->
+  <div id="pageComp" class="page hidden">
+
+    <div class="pageTopbar">
+      <div>
+        <h1 style="margin:6px 0 2px">Competition Mode</h1>
+        <p class="sub">Olympic Trap • Enter scores only (no live targets)</p>
+      </div>
+
+      <button class="iconBtn" id="backToMainBtn" type="button" title="Back">
+        ←
+      </button>
+    </div>
+
+    <div class="card compAccent" id="compControlsCard">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div style="font-weight:950;font-size:16px">Competitions</div>
+          <div class="small" id="compCountLine">0 total</div>
+        </div>
+
+        <div class="row" style="gap:8px">
+          <button class="btn primary" id="newCompBtn" type="button">+ New</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row" style="gap:10px; justify-content:space-between; align-items:center">
+        <div class="row" style="gap:10px; flex-wrap:wrap">
+          <div class="themePill" id="themeBlueBtn" type="button" role="button" aria-label="Blue theme">
+            <span class="themeDot" style="background:rgba(0,208,255,.85)"></span> Blue
+          </div>
+          <div class="themePill" id="themeRedBtn" type="button" role="button" aria-label="Red theme">
+            <span class="themeDot" style="background:rgba(239,68,68,.85)"></span> Red
+          </div>
+        </div>
+
+        <div class="small">Theme is visual only</div>
+      </div>
+    </div>
+
+    <!-- FORM (Add/Edit) -->
+    <div class="card compAccent" id="compFormCard" style="display:none; margin-top:12px">
+      <div class="row" style="justify-content:space-between; gap:10px">
+        <div>
+          <div style="font-weight:950;font-size:16px" id="compFormTitle">New competition</div>
+          <div class="small" id="compFormSub">Default 5 rounds • You can leave rounds blank and fill later</div>
+        </div>
+
+        <div class="row" style="gap:8px">
+          <button class="btn" id="cancelCompBtn" type="button">Cancel</button>
+          <button class="btn primary" id="saveCompBtn" type="button">Save</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="compFormGrid">
+        <div>
+          <label>Competition name</label>
+          <input id="compName" placeholder="e.g., Tangier GP" />
+        </div>
+
+        <div>
+          <label>Date</label>
+          <input id="compDate" type="date" />
+        </div>
+
+        <div>
+          <label>Club</label>
+          <input id="compClub" placeholder="e.g., Tangier Club" />
+        </div>
+
+        <div>
+          <label>Number of rounds</label>
+          <input id="compRoundsCount" type="number" min="1" max="10" value="5" />
+          <div class="hint">Default is 5 (125). Use fewer/more only if needed.</div>
+        </div>
+
+        <div>
+          <label>Final played?</label>
+          <select id="compFinalPlayed">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+
+        <div id="finalScoreWrap" style="display:none">
+          <label>Final score</label>
+          <input id="compFinalScore" type="number" min="0" max="200" placeholder="Enter final score" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="small" style="margin-bottom:8px">Qualification rounds (0–25 each)</div>
+      <div class="roundInputs" id="compRoundInputs"></div>
+
+      <div class="divider"></div>
+
+      <div class="row" style="justify-content:space-between; gap:10px">
+        <div class="small" id="compTotalsLine">Total: 0 • Rounds filled: 0/5</div>
+        <div class="small">Olympic Trap only</div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1">
+          <label>Notes (optional)</label>
+          <textarea id="compNotes" placeholder="Anything important about this competition…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div class="card compAccent" style="margin-top:12px">
+      <div class="list" id="compList" style="grid-template-columns:1fr"></div>
+      <div id="compEmpty" class="small" style="display:none;margin-top:10px">No competitions yet. Tap “+ New”.</div>
+    </div>
+
+    <p class="small" style="margin:14px 2px 28px"></p>
+
+  </div><!-- /#pageComp -->
+
 <!-- PROFILES MODAL -->
 <div class="modalBackdrop" id="profileModal" aria-hidden="true">
   <div class="modalCard" role="dialog" aria-modal="true" aria-label="Profiles">
@@ -1027,6 +1164,13 @@
   // Dynamic keys (change when profile changes)
   let KEY = "";
   let CART_KEY = "";
+
+  // Competitions key (per profile)
+  let COMP_KEY = "";
+  
+  // Competition theme key (global or per profile — we’ll do per profile)
+  let COMP_THEME_KEY = "";
+
   
   // Active profile object {id, name}
   let activeProfile = null;
@@ -1076,9 +1220,13 @@
   
     KEY = makeKey(found.id);
     CART_KEY = KEY + "_cartridge_manual";
+    COMP_KEY = KEY + "_competitions";
+    COMP_THEME_KEY = KEY + "_comp_theme";
+
   
     // reload per-profile rounds
     rounds = load();
+    competitions = loadCompetitions();
     // reset live round UI but keep data safe
     liveTargets = [];
     $("notes").value = "";
@@ -2239,6 +2387,370 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
       renderCartridgesSection();
     });
   }
+
+  /* =========================
+   COMPETITION MODE (Scores only)
+   Olympic Trap only
+   ========================= */
+
+  function loadCompetitions(){
+    try{
+      const raw = localStorage.getItem(COMP_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch{ return []; }
+  }
+  function saveCompetitions(list){
+    localStorage.setItem(COMP_KEY, JSON.stringify(list));
+  }
+  function compThemeGet(){
+    return localStorage.getItem(COMP_THEME_KEY) || "blue";
+  }
+  function compThemeSet(v){
+    localStorage.setItem(COMP_THEME_KEY, v === "red" ? "red" : "blue");
+  }
+  
+  let competitions = [];          // loaded per profile
+  let editingCompId = null;       // null = new, otherwise edit existing
+  
+  function showPage(which){
+    const main = $("pageMain");
+    const comp = $("pageComp");
+    if(which === "comp"){
+      main.classList.add("hidden");
+      comp.classList.remove("hidden");
+      // render comp page every time you open
+      competitions = loadCompetitions();
+      applyCompThemeToCards();
+      renderCompList();
+    }else{
+      comp.classList.add("hidden");
+      main.classList.remove("hidden");
+    }
+  }
+  
+  function applyCompThemeToCards(){
+    const t = compThemeGet();
+    // apply on the whole comp page for consistent accent
+    const page = $("pageComp");
+    page.classList.toggle("compThemeBlue", t === "blue");
+    page.classList.toggle("compThemeRed", t === "red");
+  
+    // also apply to accent cards
+    ["compControlsCard","compFormCard"].forEach(id=>{
+      const el = $(id);
+      if(!el) return;
+      el.classList.toggle("compThemeBlue", t === "blue");
+      el.classList.toggle("compThemeRed", t === "red");
+    });
+  }
+  
+  function sumRounds(rounds){
+    const arr = Array.isArray(rounds) ? rounds : [];
+    let sum = 0;
+    let filled = 0;
+    for(const v of arr){
+      if(v === null || v === undefined || v === "") continue;
+      const n = Number(v);
+      if(Number.isFinite(n)){
+        sum += n;
+        filled++;
+      }
+    }
+    return {sum, filled};
+  }
+  
+  function ensureRoundsArray(count, existing){
+    const n = Math.max(1, Math.min(10, Math.floor(Number(count || 5))));
+    const arr = Array.isArray(existing) ? existing.slice(0, n) : [];
+    while(arr.length < n) arr.push(null);
+    return arr;
+  }
+  
+  function openCompForm(comp){
+    $("compFormCard").style.display = "block";
+    $("compControlsCard").scrollIntoView({behavior:"smooth", block:"start"});
+    editingCompId = comp ? comp.id : null;
+  
+    $("compFormTitle").textContent = comp ? "Edit competition" : "New competition";
+    $("compName").value = comp ? (comp.name || "") : "";
+    $("compDate").value = comp ? (comp.date || todayISO()) : todayISO();
+    $("compClub").value = comp ? (comp.club || "") : "";
+    $("compNotes").value = comp ? (comp.notes || "") : "";
+  
+    const roundsCount = comp ? (comp.roundsCount || 5) : 5;
+    $("compRoundsCount").value = String(roundsCount);
+  
+    const finalPlayed = comp && comp.finalPlayed ? "yes" : "no";
+    $("compFinalPlayed").value = finalPlayed;
+  
+    const showFinal = finalPlayed === "yes";
+    $("finalScoreWrap").style.display = showFinal ? "block" : "none";
+    $("compFinalScore").value = showFinal ? String(comp.finalScore ?? "") : "";
+  
+    // build round inputs
+    const rounds = ensureRoundsArray(roundsCount, comp ? comp.rounds : null);
+    buildCompRoundInputs(rounds);
+    updateCompTotalsLine();
+  }
+  
+  function closeCompForm(){
+    $("compFormCard").style.display = "none";
+    editingCompId = null;
+  }
+  
+  function buildCompRoundInputs(rounds){
+    const holder = $("compRoundInputs");
+    holder.innerHTML = "";
+    const arr = ensureRoundsArray($("compRoundsCount").value, rounds);
+  
+    arr.forEach((val, idx)=>{
+      const wrap = document.createElement("div");
+      wrap.className = "ri";
+  
+      const lab = document.createElement("label");
+      lab.textContent = `R${idx+1}`;
+      wrap.appendChild(lab);
+  
+      const inp = document.createElement("input");
+      inp.type = "number";
+      inp.min = "0";
+      inp.max = "25";
+      inp.inputMode = "numeric";
+      inp.placeholder = "—";
+      inp.value = (val === null || val === undefined) ? "" : String(val);
+  
+      inp.addEventListener("input", ()=>{
+        // allow blank
+        const raw = inp.value.trim();
+        if(raw === ""){
+          inp.dataset.val = "";
+        }else{
+          let n = Math.floor(Number(raw));
+          if(!Number.isFinite(n)) n = 0;
+          n = Math.max(0, Math.min(25, n));
+          inp.value = String(n);
+          inp.dataset.val = String(n);
+        }
+        updateCompTotalsLine();
+      });
+  
+      wrap.appendChild(inp);
+      holder.appendChild(wrap);
+    });
+  }
+  
+  function readCompRoundsFromInputs(){
+    const inputs = $("compRoundInputs").querySelectorAll("input[type='number']");
+    const arr = [];
+    inputs.forEach(inp=>{
+      const raw = (inp.value || "").trim();
+      if(raw === "") arr.push(null);
+      else{
+        let n = Math.floor(Number(raw));
+        if(!Number.isFinite(n)) n = 0;
+        n = Math.max(0, Math.min(25, n));
+        arr.push(n);
+      }
+    });
+    return arr;
+  }
+  
+  function updateCompTotalsLine(){
+    const rounds = readCompRoundsFromInputs();
+    const {sum, filled} = sumRounds(rounds);
+    const count = rounds.length;
+    $("compTotalsLine").textContent = `Total: ${sum} • Rounds filled: ${filled}/${count}`;
+  }
+  
+  function renderCompList(){
+    competitions = loadCompetitions();
+  
+    // sort newest first by date then createdAt
+    const list = competitions.slice().sort((a,b)=>{
+      const da = parseISODate(a.date || "");
+      const db = parseISODate(b.date || "");
+      const ta = da ? da.getTime() : 0;
+      const tb = db ? db.getTime() : 0;
+      if(tb !== ta) return tb - ta;
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+  
+    $("compCountLine").textContent = `${list.length} total`;
+  
+    const holder = $("compList");
+    holder.innerHTML = "";
+    $("compEmpty").style.display = list.length ? "none" : "block";
+  
+    for(const c of list){
+      const roundsCount = Number(c.roundsCount || 5);
+      const roundsArr = ensureRoundsArray(roundsCount, c.rounds);
+      const {sum, filled} = sumRounds(roundsArr);
+  
+      const finalPlayed = !!c.finalPlayed;
+      const finalTxt = finalPlayed ? `Final: ${c.finalScore ?? "—"}` : "Final: —";
+  
+      const roundsLine = roundsArr
+        .map(v => (v === null || v === undefined) ? "—" : String(v))
+        .join(" | ");
+  
+      const card = document.createElement("div");
+      card.className = "compCard";
+      card.innerHTML = `
+        <div class="compHeader">
+          <div>
+            <div class="compTitle">${escapeHtml(c.name || "Untitled competition")}</div>
+            <div class="compMeta">${escapeHtml(c.date || "—")} • ${escapeHtml((c.club||"").trim() || "No club")}</div>
+          </div>
+  
+          <div class="profileActions">
+            <button class="btn" data-edit="${c.id}" type="button">✏️</button>
+            <button class="btn danger" data-delcomp="${c.id}" type="button">Delete</button>
+          </div>
+        </div>
+  
+        <div class="compRow">
+          <div class="compBadges">
+            <span class="badge"><strong>${sum}</strong> total</span>
+            <span class="badge">Rounds: <strong>${filled}</strong>/${roundsCount}</span>
+            <span class="badge">${escapeHtml(finalTxt)}</span>
+          </div>
+          <div class="compTiny">Olympic Trap</div>
+        </div>
+  
+        <div class="compRoundsLine">Rounds: ${escapeHtml(roundsLine)}</div>
+  
+        ${c.notes ? `<div class="small" style="margin-top:10px; white-space:pre-wrap">${escapeHtml(c.notes)}</div>` : ``}
+      `;
+  
+      holder.appendChild(card);
+    }
+  
+    // wire edit/delete
+    holder.querySelectorAll("[data-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-edit");
+        const comp = competitions.find(x => x.id === id);
+        if(comp) openCompForm(comp);
+      });
+    });
+  
+    holder.querySelectorAll("[data-delcomp]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-delcomp");
+        const comp = competitions.find(x => x.id === id);
+        const ok = confirm(`Delete competition "${comp ? comp.name : ""}"?`);
+        if(!ok) return;
+  
+        competitions = competitions.filter(x => x.id !== id);
+        saveCompetitions(competitions);
+        renderCompList();
+        closeCompForm();
+      });
+    });
+  }
+  
+  // --- Competition page controls ---
+  $("openCompBtn").addEventListener("click", ()=> showPage("comp"));
+  $("backToMainBtn").addEventListener("click", ()=> {
+    closeCompForm();
+    showPage("main");
+  });
+  
+  $("newCompBtn").addEventListener("click", ()=>{
+    openCompForm(null);
+  });
+  
+  $("cancelCompBtn").addEventListener("click", closeCompForm);
+  
+  $("compRoundsCount").addEventListener("change", ()=>{
+    const n = Math.max(1, Math.min(10, Math.floor(Number($("compRoundsCount").value || 5))));
+    $("compRoundsCount").value = String(n);
+    const rounds = ensureRoundsArray(n, readCompRoundsFromInputs());
+    buildCompRoundInputs(rounds);
+    updateCompTotalsLine();
+  });
+  
+  $("compFinalPlayed").addEventListener("change", ()=>{
+    const show = $("compFinalPlayed").value === "yes";
+    $("finalScoreWrap").style.display = show ? "block" : "none";
+    if(!show) $("compFinalScore").value = "";
+  });
+  
+  $("saveCompBtn").addEventListener("click", ()=>{
+    const name = ($("compName").value || "").trim();
+    const date = ($("compDate").value || todayISO()).trim();
+    const club = ($("compClub").value || "").trim();
+    const roundsCount = Math.max(1, Math.min(10, Math.floor(Number($("compRoundsCount").value || 5))));
+    const rounds = ensureRoundsArray(roundsCount, readCompRoundsFromInputs());
+  
+    const finalPlayed = $("compFinalPlayed").value === "yes";
+    let finalScore = null;
+    if(finalPlayed){
+      const raw = ($("compFinalScore").value || "").trim();
+      if(raw !== ""){
+        let n = Math.floor(Number(raw));
+        if(!Number.isFinite(n)) n = 0;
+        finalScore = Math.max(0, n);
+      } else {
+        // if final is played, allow blank, but keep null
+        finalScore = null;
+      }
+    }
+  
+    const notes = ($("compNotes").value || "").trim();
+  
+    if(!name){
+      alert("Please enter a competition name.");
+      $("compName").focus();
+      return;
+    }
+  
+    competitions = loadCompetitions();
+  
+    const now = Date.now();
+    if(editingCompId){
+      const idx = competitions.findIndex(x => x.id === editingCompId);
+      if(idx >= 0){
+        competitions[idx] = {
+          ...competitions[idx],
+          name, date, club,
+          roundsCount,
+          rounds,
+          finalPlayed,
+          ...(finalPlayed ? { finalScore } : { finalScore: null }),
+          notes,
+          updatedAt: now
+        };
+      }
+    }else{
+      competitions.unshift({
+        id: uid(),
+        name, date, club,
+        roundsCount,
+        rounds,
+        finalPlayed,
+        finalScore: finalPlayed ? finalScore : null,
+        notes,
+        createdAt: now,
+        updatedAt: now
+      });
+    }
+  
+    saveCompetitions(competitions);
+    closeCompForm();
+    renderCompList();
+  });
+  
+  // Theme buttons
+  $("themeBlueBtn").addEventListener("click", ()=>{
+    compThemeSet("blue");
+    applyCompThemeToCards();
+  });
+  $("themeRedBtn").addEventListener("click", ()=>{
+    compThemeSet("red");
+    applyCompThemeToCards();
+  });
 
 
   function renderAll(){
