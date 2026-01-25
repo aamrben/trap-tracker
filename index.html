@@ -52,7 +52,7 @@
       border-radius:18px;
       padding:12px;
       box-shadow:
-        0 8px 24px rgba(0,0,0,.45),
+        0 8px 24px rgba(0,0,0,.45);
     }
 
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -2738,11 +2738,7 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
     renderCompList();
   });
   
-  // Theme buttons
-  $("themeBlueBtn").addEventListener("click", ()=>{
-    compThemeSet("blue");
-    applyCompThemeToCards();
-  });
+
 
 
   function renderAll(){
