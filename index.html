@@ -1027,7 +1027,7 @@
         <div class="row" style="gap:10px; flex-wrap:wrap">
           <button class="themePill" id="themeBlueBtn" type="button" aria-label="Blue theme">
             <span class="themeDot" style="background:rgba(0,208,255,.85)"></span> Blue
-          </div>
+          </button>
         </div>
 
         <div class="small">Theme is visual only</div>
@@ -2620,7 +2620,7 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
             </span>
   
             <span class="badge">
-              Final: <strong>${escapeHtml(finalVal)}</strong> • Rounds: <strong>${escapeHtml(roundsLine)}</strong>
+              Final: <strong>${escapeHtml(String(finalVal))}</strong> • Rounds: <strong>${escapeHtml(roundsLine)}</strong>
             </span>
           </div>
         </div>
@@ -2630,10 +2630,8 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
   
       holder.appendChild(card);
     }
-  }
-
   
-    // wire edit/delete
+    // ✅ wire edit/delete INSIDE the function (holder exists here)
     holder.querySelectorAll("[data-edit]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = btn.getAttribute("data-edit");
@@ -2656,6 +2654,7 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
       });
     });
   }
+
   
   // --- Competition page controls ---
   $("openCompBtn").addEventListener("click", ()=> showPage("comp"));
