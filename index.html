@@ -2571,7 +2571,6 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
   function renderCompList(){
     competitions = loadCompetitions();
   
-    // sort newest first by date then createdAt
     const list = competitions.slice().sort((a,b)=>{
       const da = parseISODate(a.date || "");
       const db = parseISODate(b.date || "");
@@ -2586,20 +2585,18 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
     const holder = $("compList");
     holder.innerHTML = "";
     $("compEmpty").style.display = list.length ? "none" : "block";
-   
-    const roundsLine = roundsArr
-    .map(v => (Number.isFinite(v) ? String(v) : "—"))
-    .join(" • ");
-
   
     for(const c of list){
       const roundsCount = Number(c.roundsCount || 5);
       const roundsArr = ensureRoundsArray(roundsCount, c.rounds);
-      const {sum, filled} = sumRounds(roundsArr);
+      const { sum } = sumRounds(roundsArr);
+  
+      const roundsLine = roundsArr
+        .map(v => (Number.isFinite(v) ? String(v) : "—"))
+        .join(" • ");
   
       const finalPlayed = !!c.finalPlayed;
-      const finalTxt = finalPlayed ? `Final: ${c.finalScore ?? "—"}` : "Final: —";
-  
+      const finalVal = finalPlayed ? (c.finalScore ?? "—") : "—";
   
       const card = document.createElement("div");
       card.className = "compCard";
@@ -2621,20 +2618,20 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
             <span class="badge">
               <strong>${sum}</strong> / ${roundsCount * 25}
             </span>
-          
+  
             <span class="badge">
-              Final: <strong>${finalTxt}</strong> • Rounds: <strong>${escapeHtml(roundsLine)}</strong>
+              Final: <strong>${escapeHtml(finalVal)}</strong> • Rounds: <strong>${escapeHtml(roundsLine)}</strong>
             </span>
           </div>
-
         </div>
-  
   
         ${c.notes ? `<div class="small" style="margin-top:10px; white-space:pre-wrap">${escapeHtml(c.notes)}</div>` : ``}
       `;
   
       holder.appendChild(card);
     }
+  }
+
   
     // wire edit/delete
     holder.querySelectorAll("[data-edit]").forEach(btn=>{
