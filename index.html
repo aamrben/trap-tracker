@@ -436,10 +436,19 @@
       width:100%;
       padding:14px 14px;
       border-radius:18px;
-      border:2px;
       font-size:15px;
       font-weight:950;
       justify-content:center;
+    }
+    
+    .bigNavBtn{
+      background:rgba(0,208,255,.06);
+      border:2px solid rgba(0,208,255,.45);
+      color:#e8faff;
+      box-shadow: inset 0 0 0 1px rgba(0,208,255,.15);
+    }
+    .bigNavBtn:active{
+      transform:scale(.99);
     }
     
     .compCard{
@@ -554,10 +563,6 @@
     .compThemeBlue .compAccent{
       border-color:rgba(0,208,255,.25) !important;
       background:rgba(0,208,255,.06) !important;
-    }
-    .compThemeRed .compAccent{
-      border-color:rgba(239,68,68,.28) !important;
-      background:rgba(239,68,68,.08) !important;
     }
 
 
@@ -1021,9 +1026,6 @@
         <div class="row" style="gap:10px; flex-wrap:wrap">
           <div class="themePill" id="themeBlueBtn" type="button" role="button" aria-label="Blue theme">
             <span class="themeDot" style="background:rgba(0,208,255,.85)"></span> Blue
-          </div>
-          <div class="themePill" id="themeRedBtn" type="button" role="button" aria-label="Red theme">
-            <span class="themeDot" style="background:rgba(239,68,68,.85)"></span> Red
           </div>
         </div>
 
@@ -2405,8 +2407,9 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
     localStorage.setItem(COMP_KEY, JSON.stringify(list));
   }
   function compThemeGet(){
-    return localStorage.getItem(COMP_THEME_KEY) || "blue";
+    return "blue";
   }
+
   function compThemeSet(v){
     localStorage.setItem(COMP_THEME_KEY, v === "red" ? "red" : "blue");
   }
@@ -2591,9 +2594,6 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
       const finalPlayed = !!c.finalPlayed;
       const finalTxt = finalPlayed ? `Final: ${c.finalScore ?? "—"}` : "Final: —";
   
-      const roundsLine = roundsArr
-        .map(v => (v === null || v === undefined) ? "—" : String(v))
-        .join(" | ");
   
       const card = document.createElement("div");
       card.className = "compCard";
@@ -2612,14 +2612,13 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
   
         <div class="compRow">
           <div class="compBadges">
-            <span class="badge"><strong>${sum}</strong> total</span>
-            <span class="badge">Rounds: <strong>${filled}</strong>/${roundsCount}</span>
+            <span class="badge">
+              <strong>${sum}</strong> / ${roundsCount * 25}
+            </span>
             <span class="badge">${escapeHtml(finalTxt)}</span>
           </div>
-          <div class="compTiny">Olympic Trap</div>
         </div>
   
-        <div class="compRoundsLine">Rounds: ${escapeHtml(roundsLine)}</div>
   
         ${c.notes ? `<div class="small" style="margin-top:10px; white-space:pre-wrap">${escapeHtml(c.notes)}</div>` : ``}
       `;
@@ -2746,10 +2745,6 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
   // Theme buttons
   $("themeBlueBtn").addEventListener("click", ()=>{
     compThemeSet("blue");
-    applyCompThemeToCards();
-  });
-  $("themeRedBtn").addEventListener("click", ()=>{
-    compThemeSet("red");
     applyCompThemeToCards();
   });
 
