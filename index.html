@@ -1551,59 +1551,63 @@
     const now = performance.now();
     const rms = micRMS();
   
+    // Smooth RMS (fast enough for shots, stable for voice)
     mic.smooth = mic.smooth * 0.85 + rms * 0.15;
   
+    // Baseline (ambient) should update SLOWLY so voice stands out
     const cap = 0.12;
     const ambient = Math.min(mic.smooth, cap);
     mic.baseline = mic.baseline * 0.995 + ambient * 0.005;
   
-    const sens = Math.max(1, Math.min(100, Number($("micSens")?.value || 35)));
-    // Sensitivity 0..100 -> margin 0.035 .. 0.003
-    const sens = Number($("micSens").value || 50);
-    const margin = 0.035 - (sens/100)*0.032;  // 35ms-like range in amplitude units
+    // Sensitivity: 0..100 => margin 0.035 .. 0.003 (higher sens = lower margin = more sensitive)
+    const sens = Math.max(0, Math.min(100, Number($("micSens")?.value ?? 50)));
+    const margin = 0.035 - (sens/100) * 0.032;
     const thresh = mic.baseline + Math.max(0.003, margin);
   
-    // Two detectors:
-    // 1) IMPULSE detector for shots (fast big jump)
-    // 2) VOICE detector for call (sustained above baseline)
-    
+    // Current amplitude above baseline
     const amp = mic.smooth - mic.baseline;
-    
-    // --- tuneable thresholds (for chest pocket) ---
-    const SHOT_AMP = 0.045;     // shots are impulses, still big
-    const CALL_AMP = 0.008;     // voice is smaller
-    const CALL_HOLD_MS = 120;   // voice must stay above CALL_AMP for this long
-    
-    // --- 1) impulse detector (shots) ---
-    const isImpulse = (amp >= SHOT_AMP) && ((now - mic.lastEventAt) > 120);
-    
-    // --- 2) voice detector (call): sustained energy ---
-    if(!mic.callAboveAt && amp >= CALL_AMP){
-      mic.callAboveAt = now; // start timing sustained voice
+  
+    // Tunables for chest pocket
+    const SHOT_AMP = 0.045;      // shot impulse amplitude
+    const CALL_AMP = 0.008;      // voice amplitude
+    const CALL_HOLD_MS = 120;    // voice must stay above CALL_AMP for this long
+  
+    // --- Impulse detector: shots ---
+    const isImpulse = (amp >= SHOT_AMP) && (mic.smooth > thresh) && ((now - mic.lastEventAt) > 120);
+  
+    // --- Voice detector: sustained call ---
+    if(!mic.callAboveAt && amp >= CALL_AMP && mic.smooth > thresh){
+      mic.callAboveAt = now;
     }
-    if(mic.callAboveAt && amp < CALL_AMP){
-      mic.callAboveAt = 0;   // dropped below, reset
+    if(mic.callAboveAt && (amp < CALL_AMP || mic.smooth <= thresh)){
+      mic.callAboveAt = 0;
     }
-    
-    const isVoiceHold = mic.callAboveAt && ((now - mic.callAboveAt) >= CALL_HOLD_MS) && ((now - mic.lastEventAt) > 250);
-    
+  
+    const isVoiceHold =
+      mic.callAboveAt &&
+      ((now - mic.callAboveAt) >= CALL_HOLD_MS) &&
+      ((now - mic.lastEventAt) > 250);
+  
     if(isImpulse){
       micHandleShot(now);
       mic.lastEventAt = now;
-      mic.callAboveAt = 0; // reset voice tracker after a shot
-    }
-    else if(isVoiceHold){
+      mic.callAboveAt = 0;
+    } else if(isVoiceHold){
       micHandleCall(now);
       mic.lastEventAt = now;
       mic.callAboveAt = 0;
     }
-
-    
-    $("micStatus").textContent = `Level: ${(mic.smooth*1000).toFixed(1)} • Base: ${(mic.baseline*1000).toFixed(1)} • ${mic.state}`;
-
+  
+    // Debug readout (safe even if micStatus doesn't exist)
+    const ms = $("micStatus");
+    if(ms){
+      ms.textContent = `Level: ${(mic.smooth*1000).toFixed(1)} • Base: ${(mic.baseline*1000).toFixed(1)} • ${mic.state}`;
+    }
+  
     micUI();
     mic.raf = requestAnimationFrame(micLoop);
   }
+
   
   function micHandleCall(t){
     if(mic.state !== "WAIT_CALL") return;
