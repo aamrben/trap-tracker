@@ -1418,6 +1418,8 @@
   
     lastEventAt: 0,
     shot1LockedUntil: 0,
+    callAboveAt: 0,
+
   };
   
   function micUI(){
@@ -1556,24 +1558,43 @@
     mic.baseline = mic.baseline * 0.995 + ambient * 0.005;
   
     const sens = Math.max(1, Math.min(100, Number($("micSens")?.value || 35)));
-    const thresh = mic.baseline + (0.10 - sens/1000);
+    const thresh = mic.baseline + (0.03 - sens/5000);
   
-    const isPeak = mic.smooth > thresh && (now - mic.lastEventAt) > 120;
-  
-    if(isPeak){
-      const amp = mic.smooth - mic.baseline;
-  
-      const SHOT_AMP = 0.10;
-      const CALL_AMP = 0.03;
-  
-      if(amp >= SHOT_AMP){
-        micHandleShot(now);
-      }else if(amp >= CALL_AMP){
-        micHandleCall(now);
-      }
-  
-      mic.lastEventAt = now;
+    // Two detectors:
+    // 1) IMPULSE detector for shots (fast big jump)
+    // 2) VOICE detector for call (sustained above baseline)
+    
+    const amp = mic.smooth - mic.baseline;
+    
+    // --- tuneable thresholds (for chest pocket) ---
+    const SHOT_AMP = 0.045;     // shots are impulses, still big
+    const CALL_AMP = 0.010;     // voice is smaller
+    const CALL_HOLD_MS = 120;   // voice must stay above CALL_AMP for this long
+    
+    // --- 1) impulse detector (shots) ---
+    const isImpulse = (amp >= SHOT_AMP) && ((now - mic.lastEventAt) > 120);
+    
+    // --- 2) voice detector (call): sustained energy ---
+    if(!mic.callAboveAt && amp >= CALL_AMP){
+      mic.callAboveAt = now; // start timing sustained voice
     }
+    if(mic.callAboveAt && amp < CALL_AMP){
+      mic.callAboveAt = 0;   // dropped below, reset
+    }
+    
+    const isVoiceHold = mic.callAboveAt && ((now - mic.callAboveAt) >= CALL_HOLD_MS) && ((now - mic.lastEventAt) > 250);
+    
+    if(isImpulse){
+      micHandleShot(now);
+      mic.lastEventAt = now;
+      mic.callAboveAt = 0; // reset voice tracker after a shot
+    }
+    else if(isVoiceHold){
+      micHandleCall(now);
+      mic.lastEventAt = now;
+      mic.callAboveAt = 0;
+    }
+
     
     $("micStatus").textContent = `Level: ${(mic.smooth*1000).toFixed(1)} • Base: ${(mic.baseline*1000).toFixed(1)} • ${mic.state}`;
 
