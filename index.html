@@ -688,6 +688,11 @@
               </div>
               <div class="hint" style="margin-left:0px">Applies to HITS only • MISS = 2nd shot</div>
             </div>
+            <div class="row" style="gap:8px; margin-top:8px">
+              <button class="btn" id="autoShotBtn" type="button">Auto shot: ON</button>
+              <div class="hint">Mic detection assigns 1st/2nd shot when available</div>
+            </div>
+
 
           </div>
 
@@ -835,6 +840,23 @@
             <div class="s" id="last10Sub">Avg hits (if ≥10)</div>
           </div>
         </div>
+
+        <div class="divider"></div>
+
+        <div class="statgrid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div class="stat">
+            <div class="k">1st shot reaction</div>
+            <div class="v" id="avgRT1">—</div>
+            <div class="s" id="rt1Sub">Consistency: —</div>
+          </div>
+        
+          <div class="stat">
+            <div class="k">2nd shot reaction</div>
+            <div class="v" id="avgRT2">—</div>
+            <div class="s" id="rt2Sub">Consistency: —</div>
+          </div>
+        </div>
+
         
 
         <!-- Miss diagram 5-zone -->
@@ -1365,6 +1387,19 @@
   function blankZoneObj(){
     return {HL:0, SL:0, C:0, SR:0, HR:0};
   }
+  
+  function mean(arr){
+    return arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : null;
+  }
+  function std(arr){
+    if(arr.length < 2) return null;
+    const m = mean(arr);
+    const v = arr.reduce((s,x)=>s+(x-m)*(x-m),0)/(arr.length-1);
+    return Math.sqrt(v);
+  }
+  function fmtSec(ms){
+    return (ms/1000).toFixed(2) + "s";
+  }
 
   function countsFromTargets(targets){
     const hitZone = blankZoneObj();
@@ -1419,6 +1454,12 @@
     lastEventAt: 0,
     shot1LockedUntil: 0,
     callAboveAt: 0,
+    pendingShot: 0,          // 0 none, 1 first shot, 2 second shot
+    pendingRT: null,         // ms
+    autoShotMode: true,      // auto assigns shot number from mic
+    shotIndexThisTarget: 0,  // how many shots detected since last target was logged
+    callTime: 0,             // perf.now() of call
+
 
   };
   
@@ -1607,6 +1648,45 @@
     micUI();
     mic.raf = requestAnimationFrame(micLoop);
   }
+  
+  function micHandleCall(now){
+    mic.callTime = now;
+    mic.state = "waiting_shot1";
+    mic.pendingShot = 0;
+    mic.pendingRT = null;
+    mic.shotIndexThisTarget = 0;
+  }
+  
+  function micHandleShot(now){
+    if(!mic.callTime) return;
+  
+    const rt = now - mic.callTime; // ms since call
+  
+    mic.shotIndexThisTarget = Math.min(2, (mic.shotIndexThisTarget || 0) + 1);
+    mic.pendingShot = mic.shotIndexThisTarget; // 1 or 2
+    mic.pendingRT = rt;
+  
+    mic.state = (mic.pendingShot === 1) ? "shot1_detected" : "shot2_detected";
+  }
+  
+  function micConsumePending(){
+    const out = {
+      shot: mic.pendingShot || 0,
+      rtMs: (typeof mic.pendingRT === "number") ? mic.pendingRT : null
+    };
+    mic.pendingShot = 0;
+    mic.pendingRT = null;
+    return out;
+  }
+  
+  function micResetForNextTarget(){
+    mic.callTime = 0;
+    mic.shotIndexThisTarget = 0;
+    mic.state = "listening_call";
+    mic.pendingShot = 0;
+    mic.pendingRT = null;
+    mic.callAboveAt = 0;
+  }
 
   
   function micHandleCall(t){
@@ -1711,15 +1791,14 @@
         const labelTop = t.out === "H" ? "HIT" : "MISS";
         const labelMid = `${t.zone}`;
         const rt = (t.reactionMs != null) ? ` • ${(t.reactionMs/1000).toFixed(2)}s` : "";
-        const labelBot = (t.shot === 1 ? "1st Shot" : "2nd Shot") + rt;
-        el.className = `shot ${t.out==="H" ? "hit" : "miss"}`;
-        el.style.background = t.out==="H" ? "rgba(34,197,94,.08)" : "rgba(239,68,68,.08)";
-        el.style.color = t.out==="H" ? "var(--g1)" : "var(--r1)";
-        el.style.borderColor = t.out==="H" ? "rgba(34,197,94,.24)" : "rgba(239,68,68,.22)";
+        const labelBot = t.shot === 1 ? "1st" : "2nd";
+        const rtText = (typeof t.rtMs === "number") ? `${(t.rtMs/1000).toFixed(2)}s` : "—";
+        
         el.innerHTML = `
           <div style="font-size:18px;font-weight:950">${labelMid}</div>
-          <div class="meta">${labelBot}</div>
+          <div class="meta">${labelBot} • ${rtText}</div>
         `;
+
 
       }
       grid.appendChild(el);
@@ -1729,26 +1808,32 @@
   function pushTarget(out, zone){
     if(liveTargets.length >= 25) return;
   
-    // Misses are ALWAYS 2nd shot
-    if(out === "M"){
-      liveTargets.push({ out, zone, shot: 2, reactionMs: mic.reactionMs ?? null });
-      renderLive();
-      return;
+    // pull pending mic info (if any)
+    const pending = micConsumePending(); // {shot, rtMs}
+  
+    let shot = 0;
+  
+    // Auto shot assignment when mic detected it
+    if(mic.autoShotMode && (pending.shot === 1 || pending.shot === 2)){
+      shot = pending.shot;
+    } else {
+      // fallback to your current logic (manual toggle + miss rule)
+      shot = (out === "M") ? 2 : shotUsed;
     }
   
-    // Hits:
-    // If mic mode is ON, use mic.autoShot (1 or 2)
-    // Otherwise use manual toggle (shotUsed)
-    const shot = (mic.enabled ? mic.autoShot : shotUsed);
+    liveTargets.push({
+      out,
+      zone,
+      shot,
+      rtMs: pending.rtMs   // ✅ reaction time stored per target
+    });
   
-    liveTargets.push({ out, zone, shot, reactionMs: mic.reactionMs ?? null });
+    // ready for next target
+    if(mic.enabled) micResetForNextTarget();
+  
     renderLive();
-  
-    // If mic thought we were on shot2, reset for next target
-    if(mic.enabled && mic.autoShot === 2){
-      micResetCycle();
-    }
   }
+
 
 
 
@@ -1779,6 +1864,13 @@
   $("micResetBtn").addEventListener("click", ()=>{
     micResetCycle();
   });
+
+  $("autoShotBtn").addEventListener("click", ()=>{
+    mic.autoShotMode = !mic.autoShotMode;
+    $("autoShotBtn").textContent = `Auto shot: ${mic.autoShotMode ? "ON" : "OFF"}`;
+  });
+
+
 
   $("resetRoundBtn").addEventListener("click", ()=>{
     liveTargets = [];
@@ -2204,6 +2296,35 @@
     $("avgDirR").textContent = avgDirR.toFixed(1);
 
     $("missDiagramSub").textContent = `Avg misses per round (selected period)`;
+
+    // --- Reaction time stats (selected period) ---
+    const rt1 = [];
+    const rt2 = [];
+    
+    for(const r of list){
+      const tarr = Array.isArray(r.liveTargets) ? r.liveTargets : [];
+      for(const t of tarr){
+        if(!t || typeof t.rtMs !== "number") continue;
+        if(t.shot === 1) rt1.push(t.rtMs);
+        if(t.shot === 2) rt2.push(t.rtMs);
+      }
+    }
+    
+    const m1 = mean(rt1), s1 = std(rt1);
+    const m2 = mean(rt2), s2 = std(rt2);
+    
+    $("avgRT1").textContent = m1 === null ? "—" : fmtSec(m1);
+    $("avgRT2").textContent = m2 === null ? "—" : fmtSec(m2);
+    
+    // Consistency = SD (lower is better). Also show count.
+    $("rt1Sub").textContent =
+      (s1 === null ? "Consistency: —" : `Consistency (SD): ${fmtSec(s1)}`) +
+      ` • n=${rt1.length}`;
+    
+    $("rt2Sub").textContent =
+      (s2 === null ? "Consistency: —" : `Consistency (SD): ${fmtSec(s2)}`) +
+      ` • n=${rt2.length}`;
+
 
     // Badges
     const badge = $("mostMissedBadge");
