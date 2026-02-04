@@ -1840,45 +1840,40 @@
     $("hitPctV").textContent = `${pct(hit, Math.max(1, idx))}%`;
     $("shot2CountV").textContent = `${shot2}`;
   
+    const lastShot = liveTargets[idx - 1]?.shot ?? 1;
+  
     if(idx === 0) $("statusLine").textContent = "Ready.";
-    else if(idx < 25) $("statusLine").textContent = `Live… Target ${idx+1}/25 • Hit shot: ${shotUsed === 1 ? "1st" : "2nd"}`;
+    else if(idx < 25) $("statusLine").textContent = `Live… Target ${idx+1}/25 • Shot: ${lastShot === 1 ? "1st" : "2nd"}`;
     else $("statusLine").textContent = "Round complete. Save it or reset.";
   
     const done = idx >= 25;
     document.querySelectorAll(".zoneBtn").forEach(b => b.disabled = done);
     $("undoBtn").disabled = (idx === 0);
-
-
+  
     const grid = $("shotGrid");
     grid.innerHTML = "";
     for(let i=0;i<25;i++){
       const t = liveTargets[i];
-      const st = Math.floor(i/5) + 1;
-      const inSt = (i % 5) + 1;
-
       const el = document.createElement("div");
-
+  
       if(!t){
         el.className = "shot pending";
         el.innerHTML = `<div>—</div>`;
       } else {
         el.className = "shot";
         el.classList.add(t.out === "H" ? "hit" : "miss");
-      
         const labelMid = `${t.zone}`;
         const labelBot = t.shot === 1 ? "1st" : "2nd";
         const rtText = (typeof t.rtMs === "number") ? `${(t.rtMs/1000).toFixed(2)}s` : "—";
-      
         el.innerHTML = `
           <div style="font-size:18px;font-weight:950">${labelMid}</div>
           <div class="meta">${labelBot} • ${rtText}</div>
         `;
       }
-      
       grid.appendChild(el);
-
     }
   }
+
 
   function pushTarget(out, zone, shotOverride){
     if(liveTargets.length >= 25) return;
