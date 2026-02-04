@@ -132,6 +132,29 @@
     .shot.hit{border-color:rgba(34,197,94,.30)}
     .shot.miss{border-color:rgba(239,68,68,.26)}
 
+    /* Live grid: color rules */
+    .shot.hit1{
+      border-color: rgba(34,197,94,.30);
+      color: var(--g1);
+    }
+    .shot.hit2{
+      border-color: rgba(249,115,22,.35);
+      color: var(--orange);
+    }
+    .shot.miss1{
+      border-color: rgba(239,68,68,.26);
+      color: var(--r1);
+    }
+    
+    /* Make the small meta text inherit the same color, just lighter */
+    .shot .meta{
+      color: currentColor;
+      opacity: .75;
+    }
+
+    .shot .zoneTxt{ font-size:18px; font-weight:950; }
+
+
     /* 5-zone tap stacks */
     .zonePanel{display:grid;gap:10px}
     .zoneHeader{
@@ -762,10 +785,6 @@
             <div class="zoneHeader">
               <div class="small"></div>
 
-              <div class="hint" style="margin:0">
-                Tap = 1st shot • Double-tap = 2nd shot (for both HIT & MISS)
-              </div>
-
 
               <div class="row" style="gap:8px; margin-top:8px">
                 <button class="btn" id="autoShotBtn" type="button">Auto shot: ON</button>
@@ -797,6 +816,7 @@
               <div class="row" style="gap:10px">
                 <div class="pill"><span class="dot" style="background:var(--g1)"></span>Hit</div>
                 <div class="pill"><span class="dot" style="background:var(--r1)"></span>Miss</div>
+                <div class="pill"><span class="dot" style="background:var(--orange)"></span>2nd Hit</div>
               </div>
               <div class="small"></div>
             </div>
@@ -1861,14 +1881,21 @@
         el.innerHTML = `<div>—</div>`;
       } else {
         el.className = "shot";
-        el.classList.add(t.out === "H" ? "hit" : "miss");
-        const labelMid = `${t.zone}`;
-        const labelBot = t.shot === 1 ? "1st" : "2nd";
+
+        const isHit = (t.out === "H");
+        const isSecondHit = isHit && (t.shot === 2);
+        
+        el.classList.add(
+          isHit ? (isSecondHit ? "hit2" : "hit1") : "miss1"
+        );
+        
         const rtText = (typeof t.rtMs === "number") ? `${(t.rtMs/1000).toFixed(2)}s` : "—";
+        
         el.innerHTML = `
-          <div style="font-size:18px;font-weight:950">${labelMid}</div>
-          <div class="meta">${labelBot} • ${rtText}</div>
+          <div class="zoneTxt">${t.zone}</div>
+          <div class="meta">${rtText}</div>
         `;
+
       }
       grid.appendChild(el);
     }
