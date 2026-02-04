@@ -574,6 +574,76 @@
       background:rgba(0,208,255,.06) !important;
     }
 
+    /* =========================
+   TABS (Live / Overview / Comp+Saved)
+   ========================= */
+  .tabsBar{
+    display:flex;
+    gap:10px;
+    margin:12px 0 14px;
+    padding:6px;
+    border:1px solid var(--border);
+    background:#0f1118;
+    border-radius:18px;
+  }
+  .tabBtn{
+    flex:1;
+    border:0;
+    background:transparent;
+    color:var(--muted);
+    padding:12px 10px;
+    border-radius:14px;
+    font-weight:950;
+    cursor:pointer;
+  }
+  .tabBtn.active{
+    background:#1c1f26;
+    color:var(--text);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  
+  .tabPage{display:none;}
+  .tabPage.active{display:block;}
+
+  /* =========================
+   TABS
+   ========================= */
+  .tabsBar{
+    display:flex;
+    gap:10px;
+    margin:10px 0 12px;
+    padding:8px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:#0f1118;
+    position:sticky;
+    top:10px;
+    z-index:50;
+    backdrop-filter: blur(10px);
+  }
+  
+  .tabBtn{
+    flex:1;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--muted);
+    padding:10px 12px;
+    border-radius:14px;
+    font-weight:950;
+    cursor:pointer;
+    user-select:none;
+    min-width:0;
+  }
+  
+  .tabBtn.active{
+    color:var(--text);
+    background:#1c1f26;
+    border-color:rgba(255,255,255,.10);
+    box-shadow: inset 0 0 0 1px rgba(120,130,255,.12);
+  }
+  
+  .tabPanel{display:block;}
+  .tabPanel.hidden{display:none;}
 
 
 
@@ -592,348 +662,356 @@
   </div>
 
   <div class="wrap">
-  <!-- PAGES -->
-  <div id="pageMain" class="page">
+
+    <!-- TOP BAR -->
     <div class="topbar">
       <div>
         <h1>Olympic Trap Performance</h1>
         <p class="sub" id="activeProfileLine"></p>
       </div>
-    
-      <button class="iconBtn" id="profileBtn" type="button" title="Profiles">
-        👤
+
+      <button class="iconBtn" id="profileBtn" type="button" title="Profiles">👤</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabsBar" role="tablist" aria-label="App tabs">
+      <button class="tabBtn active" id="tabLiveBtn" type="button" role="tab" aria-selected="true" aria-controls="panelLive">
+        Live Round
+      </button>
+      <button class="tabBtn" id="tabOverviewBtn" type="button" role="tab" aria-selected="false" aria-controls="panelOverview">
+        Overview
+      </button>
+      <button class="tabBtn" id="tabCompBtn" type="button" role="tab" aria-selected="false" aria-controls="panelComp">
+        Competition + Saved
       </button>
     </div>
 
-
-    <div class="grid">
-      <!-- LIVE ROUND -->
-      <div class="card">
-        <div class="row" style="justify-content:space-between">
-          <div>
-            <div style="font-weight:950;font-size:16px">Live Round Mode</div>
-            <div class="small" id="statusLine">Ready.</div>
-          </div>
-          <div class="row" style="gap:8px">
-            <button class="btn" id="undoBtn">↩︎ Undo</button>
-            <button class="btn danger" id="resetRoundBtn">Reset round</button>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="statgrid">
-          <div class="stat"><div class="k">Score</div><div class="v" id="scoreV">0/25</div></div>
-          <div class="stat"><div class="k">Target</div><div class="v" id="shotV">0/25</div></div>
-          <div class="stat"><div class="k">Hit %</div><div class="v" id="hitPctV">0%</div></div>
-          <div class="stat">
-            <div class="k">2nd shot</div>
-            <div class="v" id="shot2CountV">0</div>
-          </div>
-
-        </div>
-
-        <div class="divider"></div>
-       
-        <!-- MIC MODE -->
-        <div class="card" style="margin:10px 0;background:#0f1118">
-          <div class="row" style="justify-content:space-between; align-items:center">
+    <!-- ======================
+         TAB 1 — LIVE ROUND
+         ====================== -->
+    <section id="panelLive" class="tabPanel" role="tabpanel" aria-labelledby="tabLiveBtn">
+      <div class="grid">
+        <!-- LIVE ROUND -->
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
             <div>
-              <div style="font-weight:950">Mic mode</div>
-              <div class="small" id="micStatus">Off</div>
+              <div style="font-weight:950;font-size:16px">Live Round Mode</div>
+              <div class="small" id="statusLine">Ready.</div>
             </div>
             <div class="row" style="gap:8px">
-              <button class="btn primary" id="micArmBtn" type="button">🎙️ ARM</button>
-              <button class="btn" id="micStopBtn" type="button" disabled>Stop</button>
-              <button class="btn danger" id="micResetBtn" type="button" disabled>Reset</button>
+              <button class="btn" id="undoBtn">↩︎ Undo</button>
+              <button class="btn danger" id="resetRoundBtn">Reset round</button>
             </div>
           </div>
-        
+
           <div class="divider"></div>
-        
-          <div class="row" style="justify-content:space-between; gap:10px">
-            <div class="small">
-              Call→Shot reaction: <b id="reactV">—</b>
-              <span style="opacity:.65"> • Shot auto: </span><b id="autoShotV">—</b>
+
+          <div class="statgrid">
+            <div class="stat"><div class="k">Score</div><div class="v" id="scoreV">0/25</div></div>
+            <div class="stat"><div class="k">Target</div><div class="v" id="shotV">0/25</div></div>
+            <div class="stat"><div class="k">Hit %</div><div class="v" id="hitPctV">0%</div></div>
+            <div class="stat">
+              <div class="k">2nd shot</div>
+              <div class="v" id="shot2CountV">0</div>
             </div>
-        
-            <div class="row" style="gap:8px; align-items:center">
-              <div style="min-width:140px">
-                <label style="margin:0 0 6px">Sensitivity</label>
-                <input id="micSens" type="number" min="1" max="100" value="35" />
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- MIC MODE -->
+          <div class="card" style="margin:10px 0;background:#0f1118">
+            <div class="row" style="justify-content:space-between; align-items:center">
+              <div>
+                <div style="font-weight:950">Mic mode</div>
+                <div class="small" id="micStatus">Off</div>
               </div>
-              <div style="min-width:160px">
-                <label style="margin:0 0 6px">2nd shot window (ms)</label>
-                <input id="shot2Win" type="number" min="600" max="2500" value="1600" />
+              <div class="row" style="gap:8px">
+                <button class="btn primary" id="micArmBtn" type="button">🎙️ ARM</button>
+                <button class="btn" id="micStopBtn" type="button" disabled>Stop</button>
+                <button class="btn danger" id="micResetBtn" type="button" disabled>Reset</button>
               </div>
             </div>
-          </div>
-        
-          <div class="hint" style="margin-top:8px">
-            Tap ARM, call “ah”, then shoot. Best with phone on chest pocket.
-          </div>
-        </div>
 
-        <div class="zonePanel">
-          <div class="zoneHeader">
-            <div class="small">
-            
-            </div>
+            <div class="divider"></div>
 
-            <div class="row" style="gap:8px">
-              <div class="small" style="font-weight:900">Hit shot</div>
-              <div class="seg" role="tablist" aria-label="Hit shot">
-                <button id="shot1Btn" class="active" type="button">1st</button>
-                <button id="shot2Btn" type="button">2nd</button>
+            <div class="row" style="justify-content:space-between; gap:10px">
+              <div class="small">
+                Call→Shot reaction: <b id="reactV">—</b>
+                <span style="opacity:.65"> • Shot auto: </span><b id="autoShotV">—</b>
               </div>
-              <div class="hint" style="margin-left:0px">Applies to HITS only • MISS = 2nd shot</div>
+
+              <div class="row" style="gap:8px; align-items:center">
+                <div style="min-width:140px">
+                  <label style="margin:0 0 6px">Sensitivity</label>
+                  <input id="micSens" type="number" min="1" max="100" value="35" />
+                </div>
+                <div style="min-width:160px">
+                  <label style="margin:0 0 6px">2nd shot window (ms)</label>
+                  <input id="shot2Win" type="number" min="600" max="2500" value="1600" />
+                </div>
+              </div>
             </div>
-            <div class="row" style="gap:8px; margin-top:8px">
-              <button class="btn" id="autoShotBtn" type="button">Auto shot: ON</button>
-              <div class="hint">Mic detection assigns 1st/2nd shot when available</div>
+
+            <div class="hint" style="margin-top:8px">
+              Tap ARM, call “ah”, then shoot. Best with phone on chest pocket.
+            </div>
+          </div>
+
+          <div class="zonePanel">
+            <div class="zoneHeader">
+              <div class="small"></div>
+
+              <div class="row" style="gap:8px">
+                <div class="small" style="font-weight:900">Hit shot</div>
+                <div class="seg" role="tablist" aria-label="Hit shot">
+                  <button id="shot1Btn" class="active" type="button">1st</button>
+                  <button id="shot2Btn" type="button">2nd</button>
+                </div>
+                <div class="hint" style="margin-left:0px">Applies to HITS only • MISS = 2nd shot</div>
+              </div>
+
+              <div class="row" style="gap:8px; margin-top:8px">
+                <button class="btn" id="autoShotBtn" type="button">Auto shot: ON</button>
+                <div class="hint">Mic detection assigns 1st/2nd shot when available</div>
+              </div>
             </div>
 
-
-          </div>
-
-          <!-- HITS -->
-          <div class="zoneGrid" id="hitGrid">
-            <button class="zoneBtn hitHL" data-out="H" data-zone="HL">←<small></small></button>
-            <button class="zoneBtn hitSL" data-out="H" data-zone="SL">↖<small></small></button>
-            <button class="zoneBtn hitC"  data-out="H" data-zone="C">↑<small></small></button>
-            <button class="zoneBtn hitSR" data-out="H" data-zone="SR">↗<small></small></button>
-            <button class="zoneBtn hitHR" data-out="H" data-zone="HR">→<small></small></button>
-          </div>
-
-          <!-- MISSES -->
-          <div class="zoneGrid" id="missGrid">
-            <button class="zoneBtn missHL" data-out="M" data-zone="HL">←<small></small></button>
-            <button class="zoneBtn missSL" data-out="M" data-zone="SL">↖<small></small></button>
-            <button class="zoneBtn missC"  data-out="M" data-zone="C">↑<small></small></button>
-            <button class="zoneBtn missSR" data-out="M" data-zone="SR">↗<small></small></button>
-            <button class="zoneBtn missHR" data-out="M" data-zone="HR">→<small></small></button>
-          </div>
-        </div>
-
-        <div class="shotsWrap">
-          <div class="row" style="justify-content:space-between; margin-top:12px">
-            <div class="row" style="gap:10px">
-              <div class="pill"><span class="dot" style="background:var(--g1)"></span>Hit</div>
-              <div class="pill"><span class="dot" style="background:var(--r1)"></span>Miss</div>
+            <!-- HITS -->
+            <div class="zoneGrid" id="hitGrid">
+              <button class="zoneBtn hitHL" data-out="H" data-zone="HL">←<small></small></button>
+              <button class="zoneBtn hitSL" data-out="H" data-zone="SL">↖<small></small></button>
+              <button class="zoneBtn hitC"  data-out="H" data-zone="C">↑<small></small></button>
+              <button class="zoneBtn hitSR" data-out="H" data-zone="SR">↗<small></small></button>
+              <button class="zoneBtn hitHR" data-out="H" data-zone="HR">→<small></small></button>
             </div>
-            <div class="small"></div>
+
+            <!-- MISSES -->
+            <div class="zoneGrid" id="missGrid">
+              <button class="zoneBtn missHL" data-out="M" data-zone="HL">←<small></small></button>
+              <button class="zoneBtn missSL" data-out="M" data-zone="SL">↖<small></small></button>
+              <button class="zoneBtn missC"  data-out="M" data-zone="C">↑<small></small></button>
+              <button class="zoneBtn missSR" data-out="M" data-zone="SR">↗<small></small></button>
+              <button class="zoneBtn missHR" data-out="M" data-zone="HR">→<small></small></button>
+            </div>
           </div>
 
-          <div class="shotGrid" id="shotGrid" style="margin-top:10px"></div>
+          <div class="shotsWrap">
+            <div class="row" style="justify-content:space-between; margin-top:12px">
+              <div class="row" style="gap:10px">
+                <div class="pill"><span class="dot" style="background:var(--g1)"></span>Hit</div>
+                <div class="pill"><span class="dot" style="background:var(--r1)"></span>Miss</div>
+              </div>
+              <div class="small"></div>
+            </div>
+
+            <div class="shotGrid" id="shotGrid" style="margin-top:10px"></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <div style="flex:1;min-width:130px">
+              <label>Date</label>
+              <input id="date" type="date" />
+            </div>
+            <div style="flex:1;min-width:140px">
+              <label>Club</label>
+              <input id="club" list="clubList" placeholder="Rabat, Umbriaverde" />
+              <datalist id="clubList"></datalist>
+            </div>
+            <div style="flex:1;min-width:5px">
+              <label>Field</label>
+              <input id="field" placeholder="1, 2" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="flex:1;min-width:160px">
+              <label>Notes</label>
+              <textarea id="notes" placeholder="Wind, light, ammo, focus cue, what felt off..."></textarea>
+            </div>
+          </div>
+
+          <div class="row" style="justify-content:space-between; margin-top:8px">
+            <div class="small">When you reach 25/25, you can save the round.</div>
+            <button class="btn primary" id="saveRoundBtn">Save round</button>
+          </div>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <div style="flex:1;min-width:130px">
-            <label>Date</label>
-            <input id="date" type="date" />
-          </div>
-          <div style="flex:1;min-width:140px">
-            <label>Club</label>
-            <input id="club" list="clubList" placeholder="Rabat, Umbriaverde" />
-            <datalist id="clubList"></datalist>
-          </div>
-          <div style="flex:1;min-width:5px">
-            <label>Field</label>
-            <input id="field" placeholder="1, 2" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div style="flex:1;min-width:160px">
-            <label>Notes</label>
-            <textarea id="notes" placeholder="Wind, light, ammo, focus cue, what felt off..."></textarea>
-          </div>
-        </div>
-
-        <div class="row" style="justify-content:space-between; margin-top:8px">
-          <div class="small">When you reach 25/25, you can save the round.</div>
-          <button class="btn primary" id="saveRoundBtn">Save round</button>
-        </div>
+        <!-- (Optional spacer card on the right in desktop grid)
+             If you want Live Round to stay wide, keep grid with single column:
+             Otherwise you can add a second card here later. -->
       </div>
+    </section>
 
-      <!-- OVERVIEW -->
-      <div class="card">
-        <div style="font-weight:950;font-size:16px">Overview</div>
-        <div class="small" id="overviewSubtitle">Simple stats for the selected period</div>
-      
-        <div class="divider"></div>
-      
-        <div class="filters filters--overview" style="display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))">
-          <div>
-            <label>Time range</label>
-            <select id="rangeSel">
-              <option value="today">Today</option>
-              <option value="week">This week</option>
-              <option value="month" selected>This month</option>
-              <option value="last3">Last 3 months</option>
-              <option value="last6">Last 6 months</option>
-              <option value="year">This year</option>
-              <option value="all">All time</option>
-              <option value="monthPick">Past month…</option>
-            </select>
-          </div>
-      
-          <div>
-            <label>Past months</label>
-            <select id="monthSel" disabled>
-              <option value="">Select month…</option>
-            </select>
-          </div>
-      
-          <div>
-            <label>Club</label>
-            <select id="clubSel">
-              <option value="all">All clubs</option>
-            </select>
-          </div>
-      
-          <div>
-            <label>Field</label>
-            <select id="fieldSel">
-              <option value="all">All fields</option>
-            </select>
-          </div>
-        </div>
-      
-        <div class="hint" style="margin-top:8px">
-          Past months is only active when “Past month” is selected.
-        </div>
-      
-        <div class="divider"></div>
-      
-        <!-- keep the rest of your overview content from here (badges, stats, charts...) -->
-
-
-        <div class="row" style="justify-content:space-between; gap:10px">
-          <div class="row" style="gap:10px; flex-wrap:wrap">
-            <span class="badge" id="mostMissedBadge" style="display:none"></span>
-            <span class="badge" id="insightBadge" style="display:none"></span>
-          </div>
-          <div class="small" id="rangeCount">0 rounds</div>
-        </div>
-
-        <div style="height:10px"></div>
-
-        <!-- Top 3 stats -->
-        <div class="statgrid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-          <div class="stat">
-            <div class="k">Average</div>
-            <div class="v" id="avgHits">0.0/25</div>
-            <div class="s" id="avgHitsSub">Avg hit %: 0%</div>
-          </div>
-
-          <div class="stat">
-            <div class="k">Best / Worst</div>
-            <div class="v" id="bestWorst">—</div>
-          </div>
-
-          <div class="stat">
-            <div class="k">Last 10 rounds</div>
-            <div class="v" id="last10">—</div>
-            <div class="s" id="last10Sub">Avg hits (if ≥10)</div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="statgrid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-          <div class="stat">
-            <div class="k">1st shot reaction</div>
-            <div class="v" id="avgRT1">—</div>
-            <div class="s" id="rt1Sub">Consistency: —</div>
-          </div>
-        
-          <div class="stat">
-            <div class="k">2nd shot reaction</div>
-            <div class="v" id="avgRT2">—</div>
-            <div class="s" id="rt2Sub">Consistency: —</div>
-          </div>
-        </div>
-
-        
-
-        <!-- Miss diagram 5-zone -->
-        <div class="divider"></div>
-
-        <div class="stat" style="background:#000D0D">
-          <div class="k">Average misses per round (by zone)</div>
-
-          <div class="row" style="justify-content:space-between; align-items:flex-start; gap:10px; margin-top:8px">
-            <div style="flex:1;text-align:center">
-              <div style="font-weight:950;color:var(--r1);font-size:18px" id="avgMHL">0.0</div>
-              <div class="small">HL</div>
-            </div>
-            <div style="flex:1;text-align:center">
-              <div style="font-weight:950;color:var(--r3);font-size:18px" id="avgMSL">0.0</div>
-              <div class="small">SL</div>
-            </div>
-            <div style="flex:1;text-align:center">
-              <div style="font-weight:950;color:var(--orange);font-size:18px" id="avgMC">0.0</div>
-              <div class="small">C</div>
-            </div>
-            <div style="flex:1;text-align:center">
-              <div style="font-weight:950;color:var(--yellow);font-size:18px" id="avgMSR">0.0</div>
-              <div class="small">SR</div>
-            </div>
-            <div style="flex:1;text-align:center">
-              <div style="font-weight:950;color:var(--r2);font-size:18px" id="avgMHR">0.0</div>
-              <div class="small">HR</div>
-            </div>
-          </div>
-
-
-          <svg viewBox="0 0 360 100" width="100%" height="100" style="margin-top:8px">
-            <!-- base point -->
-            <circle cx="180" cy="86" r="7" fill="#0f1118" stroke="var(--border)" stroke-width="2"/>
-
-            <!-- 5 rays (stylized curves) -->
-            <path d="M180 86 C130 70, 90 50, 50 18" fill="none" stroke="var(--r1)" stroke-width="6" stroke-linecap="round"/>
-            <path d="M180 86 C150 66, 125 46, 100 18" fill="none" stroke="var(--r3)" stroke-width="6" stroke-linecap="round"/>
-            <path d="M180 86 C180 60, 180 40, 180 14" fill="none" stroke="var(--orange)" stroke-width="6" stroke-linecap="round"/>
-            <path d="M180 86 C210 66, 235 46, 260 18" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linecap="round"/>
-            <path d="M180 86 C230 70, 270 50, 310 18" fill="none" stroke="var(--r2)" stroke-width="6" stroke-linecap="round"/>
-
-            <!-- labels -->
-            <text x="52" y="16" fill="var(--muted)" font-size="11" font-weight="900">HL</text>
-            <text x="100" y="16" fill="var(--muted)" font-size="11" font-weight="900">SL</text>
-            <text x="176" y="12" fill="var(--muted)" font-size="11" font-weight="900">C</text>
-            <text x="258" y="16" fill="var(--muted)" font-size="11" font-weight="900">SR</text>
-            <text x="310" y="16" fill="var(--muted)" font-size="11" font-weight="900">HR</text>
-          </svg>
-
-          <div class="s" id="missDiagramSub">Based on selected period</div>
-        </div>
+    <!-- ======================
+         TAB 2 — OVERVIEW
+         ====================== -->
+    <section id="panelOverview" class="tabPanel hidden" role="tabpanel" aria-labelledby="tabOverviewBtn">
+      <div class="grid">
+        <!-- OVERVIEW -->
+        <div class="card">
+          <div style="font-weight:950;font-size:16px">Overview</div>
+          <div class="small" id="overviewSubtitle">Simple stats for the selected period</div>
 
           <div class="divider"></div>
-          <!-- Avg misses by direction (HL+SL = LEFT, C = CENTER, SR+HR = RIGHT) -->
+
+          <div class="filters filters--overview">
+            <div>
+              <label>Time range</label>
+              <select id="rangeSel">
+                <option value="today">Today</option>
+                <option value="week">This week</option>
+                <option value="month" selected>This month</option>
+                <option value="last3">Last 3 months</option>
+                <option value="last6">Last 6 months</option>
+                <option value="year">This year</option>
+                <option value="all">All time</option>
+                <option value="monthPick">Past month…</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Past months</label>
+              <select id="monthSel" disabled>
+                <option value="">Select month…</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Club</label>
+              <select id="clubSel">
+                <option value="all">All clubs</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Field</label>
+              <select id="fieldSel">
+                <option value="all">All fields</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="hint" style="margin-top:8px">
+            Past months is only active when “Past month” is selected.
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="justify-content:space-between; gap:10px">
+            <div class="row" style="gap:10px; flex-wrap:wrap">
+              <span class="badge" id="mostMissedBadge" style="display:none"></span>
+              <span class="badge" id="insightBadge" style="display:none"></span>
+            </div>
+            <div class="small" id="rangeCount">0 rounds</div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="statgrid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <div class="stat">
+              <div class="k">Average</div>
+              <div class="v" id="avgHits">0.0/25</div>
+              <div class="s" id="avgHitsSub">Avg hit %: 0%</div>
+            </div>
+
+            <div class="stat">
+              <div class="k">Best / Worst</div>
+              <div class="v" id="bestWorst">—</div>
+            </div>
+
+            <div class="stat">
+              <div class="k">Last 10 rounds</div>
+              <div class="v" id="last10">—</div>
+              <div class="s" id="last10Sub">Avg hits (if ≥10)</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="statgrid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <div class="stat">
+              <div class="k">1st shot reaction</div>
+              <div class="v" id="avgRT1">—</div>
+              <div class="s" id="rt1Sub">Consistency: —</div>
+            </div>
+
+            <div class="stat">
+              <div class="k">2nd shot reaction</div>
+              <div class="v" id="avgRT2">—</div>
+              <div class="s" id="rt2Sub">Consistency: —</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="stat" style="background:#000D0D">
+            <div class="k">Average misses per round (by zone)</div>
+
+            <div class="row" style="justify-content:space-between; align-items:flex-start; gap:10px; margin-top:8px">
+              <div style="flex:1;text-align:center">
+                <div style="font-weight:950;color:var(--r1);font-size:18px" id="avgMHL">0.0</div>
+                <div class="small">HL</div>
+              </div>
+              <div style="flex:1;text-align:center">
+                <div style="font-weight:950;color:var(--r3);font-size:18px" id="avgMSL">0.0</div>
+                <div class="small">SL</div>
+              </div>
+              <div style="flex:1;text-align:center">
+                <div style="font-weight:950;color:var(--orange);font-size:18px" id="avgMC">0.0</div>
+                <div class="small">C</div>
+              </div>
+              <div style="flex:1;text-align:center">
+                <div style="font-weight:950;color:var(--yellow);font-size:18px" id="avgMSR">0.0</div>
+                <div class="small">SR</div>
+              </div>
+              <div style="flex:1;text-align:center">
+                <div style="font-weight:950;color:var(--r2);font-size:18px" id="avgMHR">0.0</div>
+                <div class="small">HR</div>
+              </div>
+            </div>
+
+            <svg viewBox="0 0 360 100" width="100%" height="100" style="margin-top:8px">
+              <circle cx="180" cy="86" r="7" fill="#0f1118" stroke="var(--border)" stroke-width="2"/>
+              <path d="M180 86 C130 70, 90 50, 50 18" fill="none" stroke="var(--r1)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M180 86 C150 66, 125 46, 100 18" fill="none" stroke="var(--r3)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M180 86 C180 60, 180 40, 180 14" fill="none" stroke="var(--orange)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M180 86 C210 66, 235 46, 260 18" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M180 86 C230 70, 270 50, 310 18" fill="none" stroke="var(--r2)" stroke-width="6" stroke-linecap="round"/>
+              <text x="52" y="16" fill="var(--muted)" font-size="11" font-weight="900">HL</text>
+              <text x="100" y="16" fill="var(--muted)" font-size="11" font-weight="900">SL</text>
+              <text x="176" y="12" fill="var(--muted)" font-size="11" font-weight="900">C</text>
+              <text x="258" y="16" fill="var(--muted)" font-size="11" font-weight="900">SR</text>
+              <text x="310" y="16" fill="var(--muted)" font-size="11" font-weight="900">HR</text>
+            </svg>
+
+            <div class="s" id="missDiagramSub">Based on selected period</div>
+          </div>
+
+          <div class="divider"></div>
+
           <div class="stat" id="avgDirStat" style="background:#000D0D">
             <div class="k">Average misses per round (by direction)</div>
-          
+
             <div class="row" style="justify-content:space-between; align-items:flex-start; gap:10px; margin-top:8px">
               <div style="flex:1;text-align:center">
                 <div style="font-weight:950;color:var(--r1);font-size:18px" id="avgDirL">0.0</div>
                 <div class="small">LEFT</div>
               </div>
-          
+
               <div style="flex:1;text-align:center">
                 <div style="font-weight:950;color:var(--orange);font-size:18px" id="avgDirC">0.0</div>
                 <div class="small">CENTER</div>
               </div>
-          
+
               <div style="flex:1;text-align:center">
                 <div style="font-weight:950;color:var(--r2);font-size:18px" id="avgDirR">0.0</div>
                 <div class="small">RIGHT</div>
               </div>
             </div>
           </div>
-          
+
           <div class="divider"></div>
 
           <div class="stat" id="secondShotStat" style="background:rgba(234,179,8,.08); border-color:rgba(234,179,8,.28)">
@@ -941,143 +1019,61 @@
             <div class="v" id="avgShot2">0.0/25</div>
             <div class="s" id="avgShot2Sub">Avg per round (selected period)</div>
           </div>
-        <div class="divider"></div>
 
-        <div class="stat" style="background:#000D0D">
-          <div class="k">Score trend (selected period)</div>
-          <div class="s" id="scoreTrendSub">—</div>
-        
-          <svg id="scoreTrendSvg" viewBox="0 0 360 140" width="100%" height="140" style="margin-top:8px">
-            <!-- axes -->
-            <path d="M30 10 V120 H350" fill="none" stroke="var(--border)" stroke-width="2" />
-            
-            <!-- dynamic grid + labels -->
-            <g id="scoreTrendGrid"></g>
-            <g id="scoreTrendYLabels"></g>
-        
-            <!-- plot -->
-            <path id="scoreTrendPath" d="" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            <g id="scoreTrendDots"></g>
-          </svg>
-        </div>
+          <div class="divider"></div>
 
-        <div class="divider"></div>
+          <div class="stat" style="background:#000D0D">
+            <div class="k">Score trend (selected period)</div>
+            <div class="s" id="scoreTrendSub">—</div>
 
-        <div class="small">
-          Goal: reduce your <b>most missed zone</b> first — it usually gives the fastest improvement.
-        </div>
-      </div>
-    </div>
-
-    <!-- CARTRIDGES (ALL-TIME) -->
-    <div class="cartridgeSection">
-      <div class="stat" style="background:rgba(0,208,255,.06); border-color:rgba(0,208,255,.22)">
-        <div style="font-weight:950;font-size:16px">Cartridges burned 🔥</div>
-    
-        <div class="row" style="justify-content:space-between; align-items:center; gap:12px; margin-top:10px">
-          <div>
-            <div class="v" id="cartridgeTotal" style="font-size:34px;font-weight:950">0</div>
+            <svg id="scoreTrendSvg" viewBox="0 0 360 140" width="100%" height="140" style="margin-top:8px">
+              <path d="M30 10 V120 H350" fill="none" stroke="var(--border)" stroke-width="2" />
+              <g id="scoreTrendGrid"></g>
+              <g id="scoreTrendYLabels"></g>
+              <path id="scoreTrendPath" d="" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <g id="scoreTrendDots"></g>
+            </svg>
           </div>
-    
-          <div class="row" style="gap:8px; align-items:center">
-            <input id="cartridgeStep" type="number" min="1" value="25" style="width:90px" />
-            <button class="btn" id="cartridgeMinus" type="button">− Remove</button>
-            <button class="btn" id="cartridgePlus" type="button">+ Add</button>
+
+          <div class="divider"></div>
+
+          <div class="small">
+            Goal: reduce your <b>most missed zone</b> first — it usually gives the fastest improvement.
+          </div>
+        </div>
+
+        <!-- CARTRIDGES (ALL-TIME) -->
+        <div class="card" style="background:rgba(0,208,255,.06); border-color:rgba(0,208,255,.22)">
+          <div style="font-weight:950;font-size:16px">Cartridges burned 🔥</div>
+
+          <div class="row" style="justify-content:space-between; align-items:center; gap:12px; margin-top:10px">
+            <div>
+              <div class="v" id="cartridgeTotal" style="font-size:34px;font-weight:950">0</div>
+            </div>
+
+            <div class="row" style="gap:8px; align-items:center">
+              <input id="cartridgeStep" type="number" min="1" value="25" style="width:90px" />
+              <button class="btn" id="cartridgeMinus" type="button">− Remove</button>
+              <button class="btn" id="cartridgePlus" type="button">+ Add</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div style="height:10px"></div>
-    <button class="btn primary bigNavBtn" id="openCompBtn" type="button">
-      🏁 Competition Log 🏁
-    </button>
-    <div class="hint" style="margin-top:8px"></div>
+    <!-- ======================
+         TAB 3 — COMPETITION + SAVED
+         ====================== -->
+    <section id="panelComp" class="tabPanel hidden" role="tabpanel" aria-labelledby="tabCompBtn">
 
-
-    <!-- SAVED ROUNDS -->
-    <div class="card" style="margin-top:12px; background:#111214">
-      <div class="row" style="justify-content:space-between">
-        <div>
-          <div style="font-weight:950;font-size:16px">Saved Rounds</div>
-          <div class="small" id="countLine">0 total</div>
-        </div>
-      
-        <div class="row" style="gap:8px; align-items:flex-end">
-          <div style="min-width:130px">
-            <label style="margin:0 0 6px"></label>
-            <input id="savedDate" type="date" disabled />
-          </div>
-        
-          <button class="btn primary" id="exportPdfBtn" type="button">Export PDF</button>
-        </div>
-
-        
-      </div>
-
-
-      <div class="divider"></div>
- 
-      <div class="filters" style="display:grid;gap:5px;grid-template-columns: 1fr 1fr 1fr;">
-
-        <div>
-          <label>Show</label>
-          <select id="savedRange">
-            <option value="today">Today</option>
-            <option value="week">This week</option>
-            <option value="month" selected>This month</option>
-            <option value="last3">Last 3 months</option>
-            <option value="last6">Last 6 months</option>
-            <option value="year">This year</option>
-            <option value="all">All rounds</option>
-            <option value="day">A specific day…</option>
-          </select>
-        </div>
-
-
-        <div>
-          <label>Club</label>
-          <select id="savedClub">
-            <option value="all">All clubs</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Field</label>
-          <select id="savedField">
-            <option value="all">All fields</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="list" id="list"></div>
-      <div id="empty" class="small" style="display:none;margin-top:10px">No rounds found for these filters.</div>
-    </div>
-
-    <p class="small" style="margin:14px 2px 28px">
-    
-    </p>
-  </div>
-
-  </div><!-- /#pageMain -->
-
-  <!-- ======================
-     COMPETITION MODE PAGE
-     ====================== -->
-  <div id="pageComp" class="page hidden">
-    <div class="wrap">
-  
-      <div class="pageTopbar">
+      <!-- COMPETITION LOG -->
+      <div class="pageTopbar" style="margin-top:4px">
         <div>
           <h1 style="margin:6px 0 2px">Competition Log</h1>
           <p class="sub">Olympic Trap</p>
         </div>
-  
-        <button class="iconBtn" id="backToMainBtn" type="button" title="Back">←</button>
       </div>
-  
+
       <!-- CONTROLS -->
       <div class="card compAccent" id="compControlsCard">
         <div class="row" style="justify-content:space-between">
@@ -1085,137 +1081,225 @@
             <div style="font-weight:950;font-size:16px">Competitions</div>
             <div class="small" id="compCountLine">0 total</div>
           </div>
-  
+
           <div class="row" style="gap:8px">
-            <button class="btn primary" id="newCompBtn" type="button">
-              + New Event
-            </button>
+            <button class="btn primary" id="newCompBtn" type="button">+ New Event</button>
           </div>
         </div>
       </div>
 
-    <!-- FORM (Add/Edit) -->
-    <div class="card compAccent" id="compFormCard" style="display:none; margin-top:12px">
-      <div class="row" style="justify-content:space-between; gap:10px">
-        <div>
-          <div style="font-weight:950;font-size:16px" id="compFormTitle">New competition</div>
-          <div class="small" id="compFormSub">Default 5 rounds • You can leave rounds blank and fill later</div>
+      <!-- FORM (Add/Edit) -->
+      <div class="card compAccent" id="compFormCard" style="display:none; margin-top:12px">
+        <div class="row" style="justify-content:space-between; gap:10px">
+          <div>
+            <div style="font-weight:950;font-size:16px" id="compFormTitle">New competition</div>
+            <div class="small" id="compFormSub">Default 5 rounds • You can leave rounds blank and fill later</div>
+          </div>
+
+          <div class="row" style="gap:8px">
+            <button class="btn" id="cancelCompBtn" type="button">Cancel</button>
+            <button class="btn primary" id="saveCompBtn" type="button">Save</button>
+          </div>
         </div>
 
-        <div class="row" style="gap:8px">
-          <button class="btn" id="cancelCompBtn" type="button">Cancel</button>
-          <button class="btn primary" id="saveCompBtn" type="button">Save</button>
+        <div class="divider"></div>
+
+        <div class="compFormGrid">
+          <div>
+            <label>Competition name</label>
+            <input id="compName" placeholder="e.g., Tangier GP" />
+          </div>
+
+          <div>
+            <label>Date</label>
+            <input id="compDate" type="date" />
+          </div>
+
+          <div>
+            <label>Club</label>
+            <input id="compClub" placeholder="e.g., Tangier Club" />
+          </div>
+
+          <div>
+            <label>Number of rounds</label>
+            <input id="compRoundsCount" type="number" min="1" max="10" value="5" />
+            <div class="hint">Default is 5 (125). Use fewer/more only if needed.</div>
+          </div>
+
+          <div>
+            <label>Final played?</label>
+            <select id="compFinalPlayed">
+              <option value="no" selected>No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+
+          <div id="finalScoreWrap" style="display:none">
+            <label>Final score</label>
+            <input id="compFinalScore" type="number" min="0" max="200" placeholder="Enter final score" />
+          </div>
         </div>
+
+        <div class="divider"></div>
+
+        <div class="small" style="margin-bottom:8px">Qualification rounds (0–25 each)</div>
+        <div class="roundInputs" id="compRoundInputs"></div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="justify-content:space-between; gap:10px">
+          <div class="small" id="compTotalsLine">Total: 0 • Rounds filled: 0/5</div>
+          <div class="small"></div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div style="flex:1">
+            <label>Notes (optional)</label>
+            <textarea id="compNotes" placeholder="Anything important about this competition…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIST -->
+      <div class="card compAccent" style="margin-top:12px">
+        <div class="list" id="compList" style="grid-template-columns:1fr"></div>
+        <div id="compEmpty" class="small" style="display:none;margin-top:10px">No competitions yet. Tap “+ New”.</div>
       </div>
 
       <div class="divider"></div>
 
-      <div class="compFormGrid">
-        <div>
-          <label>Competition name</label>
-          <input id="compName" placeholder="e.g., Tangier GP" />
+      <!-- SAVED ROUNDS -->
+      <div class="card" style="margin-top:12px; background:#111214">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:950;font-size:16px">Saved Rounds</div>
+            <div class="small" id="countLine">0 total</div>
+          </div>
+
+          <div class="row" style="gap:8px; align-items:flex-end">
+            <div style="min-width:130px">
+              <label style="margin:0 0 6px"></label>
+              <input id="savedDate" type="date" disabled />
+            </div>
+
+            <button class="btn primary" id="exportPdfBtn" type="button">Export PDF</button>
+          </div>
         </div>
 
-        <div>
-          <label>Date</label>
-          <input id="compDate" type="date" />
+        <div class="divider"></div>
+
+        <div class="filters" style="display:grid;gap:5px;grid-template-columns: 1fr 1fr 1fr;">
+          <div>
+            <label>Show</label>
+            <select id="savedRange">
+              <option value="today">Today</option>
+              <option value="week">This week</option>
+              <option value="month" selected>This month</option>
+              <option value="last3">Last 3 months</option>
+              <option value="last6">Last 6 months</option>
+              <option value="year">This year</option>
+              <option value="all">All rounds</option>
+              <option value="day">A specific day…</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Club</label>
+            <select id="savedClub">
+              <option value="all">All clubs</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Field</label>
+            <select id="savedField">
+              <option value="all">All fields</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label>Club</label>
-          <input id="compClub" placeholder="e.g., Tangier Club" />
-        </div>
+        <div class="divider"></div>
 
-        <div>
-          <label>Number of rounds</label>
-          <input id="compRoundsCount" type="number" min="1" max="10" value="5" />
-          <div class="hint">Default is 5 (125). Use fewer/more only if needed.</div>
-        </div>
+        <div class="list" id="list"></div>
+        <div id="empty" class="small" style="display:none;margin-top:10px">No rounds found for these filters.</div>
+      </div>
+    </section>
 
-        <div>
-          <label>Final played?</label>
-          <select id="compFinalPlayed">
-            <option value="no" selected>No</option>
-            <option value="yes">Yes</option>
-          </select>
-        </div>
+  </div><!-- /.wrap -->
 
-        <div id="finalScoreWrap" style="display:none">
-          <label>Final score</label>
-          <input id="compFinalScore" type="number" min="0" max="200" placeholder="Enter final score" />
+  <!-- PROFILES MODAL (unchanged) -->
+  <div class="modalBackdrop" id="profileModal" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Profiles">
+      <div class="modalHead">
+        <div>
+          <div style="font-weight:950;font-size:16px">Profiles</div>
+          <div class="small">Switch, add, or remove profiles</div>
         </div>
+        <button class="btn" id="closeProfileModal" type="button">✕</button>
       </div>
 
       <div class="divider"></div>
 
-      <div class="small" style="margin-bottom:8px">Qualification rounds (0–25 each)</div>
-      <div class="roundInputs" id="compRoundInputs"></div>
+      <div class="small" style="margin-bottom:8px">Active profile</div>
+      <div id="profilesList" class="profilesList"></div>
 
       <div class="divider"></div>
 
-      <div class="row" style="justify-content:space-between; gap:10px">
-        <div class="small" id="compTotalsLine">Total: 0 • Rounds filled: 0/5</div>
-        <div class="small"></div>
+      <div class="row" style="gap:8px; justify-content:flex-end; flex-wrap:wrap">
+        <button class="btn" id="exportProfileJsonBtn" type="button">Export Profile</button>
+        <button class="btn" id="importProfileJsonBtn" type="button">Import Profile</button>
+        <input id="importProfileFile" type="file" accept="application/json" style="display:none" />
       </div>
 
-      <div class="row" style="margin-top:10px">
-        <div style="flex:1">
-          <label>Notes (optional)</label>
-          <textarea id="compNotes" placeholder="Anything important about this competition…"></textarea>
-        </div>
+      <div class="divider"></div>
+
+      <div class="row" style="gap:8px; align-items:center">
+        <input id="newProfileName" placeholder="New profile name (e.g. Aamr, Pellielo)" />
+        <button class="btn primary" id="addProfileBtn" type="button">+ Add</button>
       </div>
-    </div>
 
-    <!-- LIST -->
-    <div class="card compAccent" style="margin-top:12px">
-      <div class="list" id="compList" style="grid-template-columns:1fr"></div>
-      <div id="compEmpty" class="small" style="display:none;margin-top:10px">No competitions yet. Tap “+ New”.</div>
-    </div>
-
-    <p class="small" style="margin:14px 2px 28px"></p>
-   </div>
-  </div><!-- /#pageComp -->
-
-<!-- PROFILES MODAL -->
-<div class="modalBackdrop" id="profileModal" aria-hidden="true">
-  <div class="modalCard" role="dialog" aria-modal="true" aria-label="Profiles">
-    <div class="modalHead">
-      <div>
-        <div style="font-weight:950;font-size:16px">Profiles</div>
-        <div class="small">Switch, add, or remove profiles</div>
-      </div>
-      <button class="btn" id="closeProfileModal" type="button">✕</button>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="small" style="margin-bottom:8px">Active profile</div>
-    <div id="profilesList" class="profilesList"></div>
-
-    <div class="divider"></div>
-
-    <div class="row" style="gap:8px; justify-content:flex-end; flex-wrap:wrap">
-      <button class="btn" id="exportProfileJsonBtn" type="button">Export Profile</button>
-      <button class="btn" id="importProfileJsonBtn" type="button">Import Profile</button>
-      <input id="importProfileFile" type="file" accept="application/json" style="display:none" />
-    </div>
-
-
-    <div class="divider"></div>
-
-    <div class="row" style="gap:8px; align-items:center">
-      <input id="newProfileName" placeholder="New profile name (e.g. Aamr, Pellielo)" />
-      <button class="btn primary" id="addProfileBtn" type="button">+ Add</button>
-    </div>
-
-    <div class="hint" style="margin-top:10px">
+      <div class="hint" style="margin-top:10px"></div>
     </div>
   </div>
-</div>
+
 
 
 <script>
   const $ = (id) => document.getElementById(id);
+
+  // =========================
+  // Tabs (Live / Overview / Competition+Saved)
+  // =========================
+  function setActiveTab(tab){
+    const tabs = [
+      { btn: $("tabLiveBtn"), panel: $("panelLive") },
+      { btn: $("tabOverviewBtn"), panel: $("panelOverview") },
+      { btn: $("tabCompBtn"), panel: $("panelComp") },
+    ];
+  
+    tabs.forEach(t=>{
+      const isOn =
+        (tab === "live" && t.btn === $("tabLiveBtn")) ||
+        (tab === "overview" && t.btn === $("tabOverviewBtn")) ||
+        (tab === "comp" && t.btn === $("tabCompBtn"));
+  
+      t.btn.classList.toggle("active", isOn);
+      t.btn.setAttribute("aria-selected", isOn ? "true" : "false");
+      t.panel.classList.toggle("hidden", !isOn);
+    });
+  
+    // When opening comp tab, always refresh competition list
+    if(tab === "comp"){
+      competitions = loadCompetitions();
+      applyCompThemeToCards();
+      renderCompList();
+    }
+  }
+  
+  $("tabLiveBtn").addEventListener("click", ()=> setActiveTab("live"));
+  $("tabOverviewBtn").addEventListener("click", ()=> setActiveTab("overview"));
+  $("tabCompBtn").addEventListener("click", ()=> setActiveTab("comp"));
+
 
   // ---- Profiles storage ----
   const PROFILES_KEY = "trap_tracker_profiles_v1";
@@ -1300,6 +1384,7 @@
     $("activeProfileLine").textContent = `Profile: ${found.name}`;
   
     renderAll();
+    setActiveTab("live");
     hideLoader();
   }
 
@@ -2871,28 +2956,16 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
   let competitions = [];          // loaded per profile
   let editingCompId = null;       // null = new, otherwise edit existing
   
-  function showPage(which){
-    const main = $("pageMain");
-    const comp = $("pageComp");
-    if(which === "comp"){
-      main.classList.add("hidden");
-      comp.classList.remove("hidden");
-      // render comp page every time you open
-      competitions = loadCompetitions();
-      applyCompThemeToCards();
-      renderCompList();
-    }else{
-      comp.classList.add("hidden");
-      main.classList.remove("hidden");
-    }
-  }
   
   function applyCompThemeToCards(){
     const t = compThemeGet();
     // apply on the whole comp page for consistent accent
-    const page = $("pageComp");
-    page.classList.toggle("compThemeBlue", t === "blue");
-    page.classList.toggle("compThemeRed", t === "red");
+    const panel = $("panelComp");
+    if(panel){
+      panel.classList.toggle("compThemeBlue", t === "blue");
+      panel.classList.toggle("compThemeRed", t === "red");
+    }
+
   
     // also apply to accent cards
     ["compControlsCard","compFormCard"].forEach(id=>{
@@ -3110,11 +3183,6 @@ $("exportPdfBtn").addEventListener("click", exportSavedRoundsPDF);
 
   
   // --- Competition page controls ---
-  $("openCompBtn").addEventListener("click", ()=> showPage("comp"));
-  $("backToMainBtn").addEventListener("click", ()=> {
-    closeCompForm();
-    showPage("main");
-  });
   
   $("newCompBtn").addEventListener("click", ()=>{
     openCompForm(null);
